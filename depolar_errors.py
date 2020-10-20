@@ -4,14 +4,14 @@ import numpy as np
 #from qutip import *
 import qutip as qu
 
-from utils_qnd import pick_qnd_error
+from utils.utils_qnd import pick_qnd_error
 
-from p_operators import *
+from utils.p_operators import *
 
 from random import randint
 seme = randint(0,100)
 
-seme=47
+seme=5
 np.random.seed(seme)
 
 print("\nseed:", seme)
@@ -20,44 +20,35 @@ num_trials = 1
 
 final_p_loss = []
 
-p_qnd = 0.0
-p_loss = 0.3
-for p_loss in np.arange(0.00,0.9,0.05):
+p_qnd = 0.25
+p_loss = 0.5
+#for p_loss in np.arange(0.00,0.9,0.05):
+if 1:
     trial = 0
     result_correction = []  
     num_losses = []
     num_qnd_errors = []
+    errors_on_qubits = []
     while trial < num_trials:
- #   if 1:
-
-
-
-        a = np.random.random()  + np.random.random() * 1j
-        b = np.random.random()  + np.random.random() * 1j
-
-        psiL = (a * ZeroL + b * OneL).unit()
-
-        #1 means lost, 0 means not lost
-
         random_loss = []
         qnd_errors = []
-        qubit_detected = []        
         for qubit in range(L):
             qnd_err_str = pick_qnd_error(p_qnd)
+            print(qnd_err_str)
             err1_str, err2_str = qnd_err_str
-            qnd_error = (err2_str in ("X", "Y")) + 0        
-            
-            qnd_detection = (not (err2_str in ("X", "Y"))) + 0
+            errors_on_qubits.append(err1_str)
+            qnd_error = (err2_str in ("X", "Y")) + 0
             loss_bool = np.random.binomial(1, p_loss)
             random_loss.append(loss_bool)
             qnd_errors.append(qnd_error)
-            qubit_detected.append(qnd_detection)
 
-
-#         print(f"{'random_loss':30s}", random_loss)
-#         print(f"{'qnd_errors':30s}", qnd_errors)  
-#         print(f"{'qubit_detected':30s}", qubit_detected)               
-
+        random_loss=                    [1, 0, 0, 0, 0, 1, 0]
+        qnd_errors=                     [0, 0, 0, 0, 0, 0, 0]
+        errors_on_qubits=               ['X', 'I', 'I', 'X', 'I', 'I', 'I']
+        
+        print(f"{'random_loss':30s}", random_loss)
+        print(f"{'qnd_errors':30s}", qnd_errors)
+        print(f"{'errors_on_qubits':30s}", errors_on_qubits)
 
         A_loss = (sum(random_loss) == 0)
         B_loss = (sum(random_loss) == 1)
@@ -80,12 +71,12 @@ for p_loss in np.arange(0.00,0.9,0.05):
         to_check_no_losses     = A_loss and C_qnd
         to_check_no_qnd_errors = C_loss and A_qnd
                 
-#         print(f'{"correctable_events":30s}', correctable_events)
-#         print(f'{"non_correctable_events":30s}', non_correctable_events)
-#         print(f'{"to_check_no_loss":30s}', to_check_no_losses)        
-#         print(f'{"to_check_no_qnd":30s}', to_check_no_qnd_errors)                
-#         exit()
-    for _ in range(5):
+        print(f'{"correctable_events":30s}', correctable_events)
+        print(f'{"non_correctable_events":30s}', non_correctable_events)
+        print(f'{"to_check_no_loss":30s}', to_check_no_losses)        
+        print(f'{"to_check_no_qnd":30s}', to_check_no_qnd_errors)                
+
+
         if correctable_events:
             trial += 1
             correction_successful = True
@@ -96,218 +87,122 @@ for p_loss in np.arange(0.00,0.9,0.05):
             correction_successful = False
             result_correction.append(correction_successful + 0)
             continue
-        elif to_check_no_qnd_errors or to_check_no_losses:
-
+        elif to_check_no_losses or to_check_no_qnd_errors:
             trial += 1
-                    
-
-#         if 1 < len(losses) < 7:
-#             w_0 = psiL.ptrace(kept_qubits)
-#             w = (qu.tensor([qu.fock_dm(2,0)] * len(losses) + [w_0])).unit()
-#         elif len(losses) == 7:
-#             w = (qu.tensor([qu.fock_dm(2,0)] * len(losses))).unit()        
-#         else:
-#             w = (qu.ket2dm(psiL)).unit()
-
-        w = psiL.ptrace(kept_qubits)
-         
-        #1 means qnd error
-        qnd_errors = np.random.binomial(1, p_qnd, 7)
-    
+            if to_check_no_losses:
+                #transform the wrongly detected losses in actual losses and make the correction
+                losses = np.where(qnd_errors)[0].tolist()
+            if to_check_no_qnd_errors:                
+                losses = np.where(random_loss)[0].tolist()
+                # remove from the list of errors, the ones that occur on lost qubits:
+                # this becasue lost qubits are replaced by fresh new qubits and this process 
+                # happens with no errors                 
+                for loss in losses:
+                    errors_on_qubits[loss] = 'I'
 
 
-        detected_state =[ (qnd_error + loss) % 2 for qnd_error,loss in zip(qnd_errors, random_loss)]
-            
-                    
-
-        detected_losses = np.where(detected_state)[0].tolist()
-
-        # detection error: no loss detected
-        detected_losses = []
-
-        guessed_kept_qubits = list(set(range(L)) - set(detected_losses))
-        
-        print(f"{'random_loss':25}", random_loss)
-        print(f"{'qnd_errors':25}", qnd_errors)
-        print(f"{'detected_state':25}", detected_state)
-        print(f"{'detected_losses':25}", detected_losses)        
-        print(f"{'guessed_kept_qubits':25}", guessed_kept_qubits)                
-
-
-#         if (len(detected_losses) == 0):
-#             continue
-#         elif (len(detected_losses) > 4):
-#             trial += 1
-#             correction_successful = False
-#             result_correction.append(correction_successful + 0)
-#             continue
-#         else:
-#             trial += 1
-#             print("trial", trial, p_loss, p_qnd)
-
- 
-        pemutation_order_q = {}
-        print(kept_qubits)
-        for j, el in enumerate(detected_losses + guessed_kept_qubits):
-            pemutation_order_q[el] = j
-        
-        print("pemutation_order_q", pemutation_order_q)
-
-        stab_qubits_new_order = []
-        for stab in stab_qubits:
-            stab_qubits_new_order.append([pemutation_order_q[q] for q in stab])
-            print(stab, [pemutation_order_q[q] for q in stab])
-            
-
-        Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
-        Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
-
-        Id = qu.tensor([qu.qeye(2)] * (L - len(losses)))
-        
-        temp = [[qu.qeye(2)] * j + [qu.sigmax()] + [qu.qeye(2)] * (L  - len(losses) - j - 1) for j in range(L - len(losses))]
-        X = [qu.tensor(temp[j]) for j in range(L - len(losses))]
-
-        temp = [[qu.qeye(2)] * j + [qu.sigmay()] + [qu.qeye(2)] * (L - len(losses) - j - 1) for j in range(L - len(losses))]
-        Y = [qu.tensor(temp[j]) for j in range(L - len(losses))]
-
-        temp = [[qu.qeye(2)] * j + [qu.sigmaz()] + [qu.qeye(2)] * (L  - len(losses) - j - 1) for j in range(L - len(losses))]
-        Z = [qu.tensor(temp[j]) for j in range(L - len(losses))]
-        
-        stab_qubits = [[0,1,2,3], [1,2,4], [2,3,5]]
-
-        Sx = [None, None, None]
-        Sz = [None, None, None]
                 
-        for j_el, st_el in enumerate(stab_qubits):
-            if len(st_el) == 4:
-                j1,j2,j3,j4 = st_el
-                Sx[j_el] = X[j1] * X[j2] * X[j3] * X[j4]
-                Sz[j_el] = Z[j1] * Z[j2] * Z[j3] * Z[j4]
-            elif len(st_el) == 3:
-                j1,j2,j3 = st_el
-                Sx[j_el] = X[j1] * X[j2] * X[j3]
-                Sz[j_el] = Z[j1] * Z[j2] * Z[j3]                
-            elif len(st_el) == 2:
-                j1,j2 = st_el
-                Sx[j_el] = X[j1] * X[j2]
-                Sz[j_el] = Z[j1] * Z[j2]                
-            elif len(st_el) == 1:
-                j1 = st_el
-                Sx[j_el] = X[j1]
-                Sz[j_el] = Z[j1]                
-            elif len(st_el) == 0:
-                Sx[j_el] = Id    
-                Sz[j_el] = Id
+                
 
+            kept_qubits = list(set(range(L)) - set(losses))                
+                
+            a = np.random.random()  + np.random.random() * 1j
+            b = np.random.random()  + np.random.random() * 1j
 
-        ZL = Z[0] * Z[1] * Z[2] * Z[3] * Z[4] * Z[5]
+            psiL = (a * ZeroL + b * OneL).unit()
 
-        XL = X[0] * X[1] * X[2] * X[3] * X[4] * X[5]
+            w_0 = psiL.ptrace(kept_qubits)
+            w = (qu.tensor([qu.fock_dm(2,0)] * len(losses) + [w_0])).unit()
+
+            permutation_order_q = {}
+            print(losses , kept_qubits)
+            for j, el in enumerate(losses + kept_qubits):
+                permutation_order_q[el] = j
+            print("permutation_order_q", permutation_order_q)            
+            #Apply to the state w the errors in the list errors_on_qubits
+            errors_p = "XYZ"            
+            for qubit_n, err_str in enumerate(errors_on_qubits):
+                if err_str != 'I':
+                    data_qubit = permutation_order_q[qubit_n]
+                    errs_q = [X[data_qubit], Y[data_qubit], Z[data_qubit]]
+                    errs_q_t = [f"X[{data_qubit}]",f"Y[{data_qubit}]",f"Z[{data_qubit}]"]                    
+                    op1_index = errors_p.index(err_str)
+                    w = errs_q[op1_index] * w * errs_q[op1_index]
+                    print(errs_q_t[op1_index])
+
+            w = w.unit()
             
-        Px = [(Id + el) / 2 for el in Sx]
-        Pz = [(Id + el) / 2 for el in Sz]
+            stab_qubits_new_order = []
+            for stab in stab_qubits:
+                stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
+                print(stab, [permutation_order_q[q] for q in stab])
 
-        Pmx = [(Id - el) / 2 for el in Sx]
-        Pmz = [(Id - el) / 2 for el in Sz]                
+            Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+            Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+                
+            Px = [(Id + el) / 2 for el in Sx]
+            Pz = [(Id + el) / 2 for el in Sz]
 
-        stabZ_eigenvalues = []
+            Pmx = [(Id - el) / 2 for el in Sx]
+            Pmz = [(Id - el) / 2 for el in Sz]                
 
-        state_after_measure = w
-        for meas in range(3):
-            prob_plus =  (Pz[meas] * state_after_measure).tr()
-            if prob_plus > 1: prob_plus = 1
-            if prob_plus < 0: prob_plus = 0    
+            stabZ_eigenvalues = []
 
-            result = 2 * np.random.binomial(1, prob_plus) - 1
-            stabZ_eigenvalues.append(result)
-            print(f"RESULT Z {meas} {prob_plus} {result}")    
-            if result == + 1:
-                state_after_measure =  Pz[meas] * state_after_measure * Pz[meas] / prob_plus
-            else:
-                state_after_measure =  Pmz[meas] * state_after_measure * Pmz[meas] / (1 - prob_plus)
+            state_after_measure = w
+            for meas in range(3):
+                prob_plus =  (Pz[meas] * state_after_measure).tr()
+                print(prob_plus)
+                if prob_plus > 1: prob_plus = 1
+                if prob_plus < 0: prob_plus = 0    
 
-        stabX_eigenvalues = []
-        for meas in range(3):
-            prob_plus =  (Px[meas] * state_after_measure).tr()
-            if prob_plus > 1: prob_plus = 1
-            if prob_plus < 0: prob_plus = 0    
-            result = 2 * np.random.binomial(1, prob_plus) - 1
-            stabX_eigenvalues.append(result)
-            print(f"RESULT X {meas} {prob_plus} {result}")      
-            if result == +1:
-                state_after_measure =  Px[meas] * state_after_measure * Px[meas] / prob_plus
-            else:
-                state_after_measure = Pmx[meas] * state_after_measure * Pmx[meas] / (1 - prob_plus)
-########################################################################
-                 
-        correction_qubits = [0, 4, 6]
+                result = 2 * np.random.binomial(1, prob_plus) - 1
+                stabZ_eigenvalues.append(result)
+            #    print(f"RESULT Z {meas} {prob_plus} {result}")    
+                if result == + 1:
+                    state_after_measure =  Pz[meas] * state_after_measure * Pz[meas] / prob_plus
+                else:
+                    state_after_measure =  Pmz[meas] * state_after_measure * Pmz[meas] / (1 - prob_plus)
+
+            stabX_eigenvalues = []
+            for meas in range(3):
+                prob_plus =  (Px[meas] * state_after_measure).tr()
+                if prob_plus > 1: prob_plus = 1
+                if prob_plus < 0: prob_plus = 0    
+                result = 2 * np.random.binomial(1, prob_plus) - 1
+                stabX_eigenvalues.append(result)
+            #    print(f"RESULT X {meas} {prob_plus} {result}")      
+                if result == +1:
+                    state_after_measure =  Px[meas] * state_after_measure * Px[meas] / prob_plus
+                else:
+                    state_after_measure = Pmx[meas] * state_after_measure * Pmx[meas] / (1 - prob_plus)
+                    
+            state_after_measure = state_after_measure.unit()
         
-#         for j_stab, syndrome in enumerate(stabZ_eigenvalues):
-#             if syndrome == -1:
-#                 qubit_correction = pemutation_order_q[correction_qubits[j_stab]]
-#                 #print("Z syndrome corrected by X[", correction_qubits[j_stab], "]")
-#                 #print("on the new state: Z syn ecorrected by X[", qubit_correction, "]")
-#                 op_correction = X[qubit_correction]
-#                 state_after_measure = op_correction * state_after_measure * op_correction   
-
-
-
-#         for j_stab, syndrome in enumerate(stabX_eigenvalues):
-#             if syndrome == -1:
-#                 qubit_correction = pemutation_order_q[correction_qubits[j_stab]]
-#                 print("X syndrome corrected by Z[", correction_qubits[j_stab], "]")
-#                 print("on the new state: X syn ecorrected by Z[", qubit_correction, "]")
-#                 op_correction = Z[qubit_correction]
-#                 state_after_measure = op_correction * state_after_measure * op_correction        
-
-        print("before correction")                               
-        print("Sz", [(state_after_measure * Sz[j]).tr() for j in range(3)])
-        print("Sx", [(state_after_measure * Sx[j]).tr() for j in range(3)])    
-
-
-
-        if 0:
-            for corr in [6]:
-                op_correction = X[pemutation_order_q[corr]]
-                state_after_measure = op_correction * state_after_measure * op_correction        
-
-            for corr in [1,3,5]:
-                op_correction = Z[pemutation_order_q[corr]]
-                state_after_measure = op_correction * state_after_measure * op_correction   
-            
-            print("after correction")                               
-            print("Sz", [(state_after_measure * Sz[j]).tr() for j in range(3)])
-            print("Sx", [(state_after_measure * Sx[j]).tr() for j in range(3)])    
-    
-                                                    
-        state_after_measure = state_after_measure.unit()
+            expected_Z = np.abs(qu.expect(ZL, psiL))
+            expected_X = np.abs(qu.expect(XL, psiL))
         
-        
-        measured_Z = np.abs(qu.expect(ZL, state_after_measure))
-        measured_X = np.abs(qu.expect(XL, state_after_measure))
+            measured_Z = np.abs(qu.expect(ZL, state_after_measure))
+            measured_X = np.abs(qu.expect(XL, state_after_measure))
 
-        correction_successful = ((np.abs(expected_Z - measured_Z) < 1e-7)
-                                    and 
-                                    (np.abs(expected_X - measured_X) < 1e-7))
+            correction_successful = ((np.abs(expected_Z - measured_Z) < 1e-7)
+                                        and 
+                                        (np.abs(expected_X - measured_X) < 1e-7))
 
-        print("correction_successful:", correction_successful)
-        print("qu.expect(ZL, state_after_measure)", stabZ_eigenvalues, f"{expected_Z:1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
-        print("qu.expect(XL, state_after_measure)", stabX_eigenvalues,f"{expected_X:1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
+            print("correction_successful:", correction_successful)
+            print("qu.expect(ZL, state_after_measure)", stabZ_eigenvalues, f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
+            print("qu.expect(XL, state_after_measure)", stabX_eigenvalues,f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
 
-        result_correction.append(correction_successful + 0)
+            result_correction.append(correction_successful + 0)
 
-        done_trials = trial
-        num_losses.append(len(losses))
-        num_qnd_errors.append(sum(qnd_errors))        
+            done_trials = trial
+            num_losses.append(len(losses))
+            num_qnd_errors.append(sum(qnd_errors))        
+            exit()
+    exit()
+    final_p_error.append([p_error, p_qnd, np.mean(result_correction), np.std(result_correction), np.mean(num_losses), np.mean(num_qnd_errors)])
 
-    final_p_loss.append([p_loss, p_qnd, np.mean(result_correction), np.std(result_correction), np.mean(num_losses), np.mean(num_qnd_errors)])
-
-exit()
-
-
-
-np.savetxt(f"final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}.dat", final_p_loss, fmt='%1.3f\t%1.3f\t' + '%1.6f\t' * 4)
-final = np.array(final_p_loss)
+np.savetxt(f"final_errors_{num_trials}_pqnd_{p_qnd:1.3f}_seed_{seme}.dat", final_p_error, fmt='%1.3f\t%1.3f\t' + '%1.6f\t' * 4)
+final = np.array(final_p_error)
 
 import matplotlib.pyplot as plt
 
@@ -328,8 +223,7 @@ plt.plot(x_data, y_data, '-')
 
 plt.xlabel("p")
 plt.ylabel("p(success)")
-plt.savefig(f"final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}.pdf")
+plt.savefig(f"final_errors_{num_trials}_pqnd_{p_qnd:1.3f}_seed_{seme}.pdf")
 
 plt.show()
 
-exit()

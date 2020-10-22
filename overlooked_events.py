@@ -21,7 +21,13 @@ num_trials = 1000
 
 final_p_error = []
 
-p_qnd = 0.02
+import argparse
+#python overlooked_events.py --p_qnd 
+parser = argparse.ArgumentParser(description = "Simulate qubit losses and qnd error with a phenomenological model")
+parser.add_argument('--p_qnd',  type=float, default=0.0, help = "probability of a false negative")
+args = parser.parse_args()
+
+p_qnd = args.p_qnd
 
 for p_error in np.arange(0.0,0.9,0.05):
     trial = 0
@@ -182,7 +188,7 @@ plt.plot(x_data, y_data, '-')
 plt.xlabel("p")
 plt.ylabel("p(success)")
 plt.savefig(f"data/final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}_seed_{seme}.pdf")
-
+plt.title("$p_\mathrm{qnd} = " +  f"{p_qnd:1.2f}$")
 plt.show()
 
 exit()

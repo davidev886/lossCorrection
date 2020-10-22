@@ -21,7 +21,7 @@ num_trials = 1000
 
 final_p_error = []
 
-p_qnd = 0.01
+p_qnd = 0.02
 
 for p_error in np.arange(0.0,0.9,0.05):
     trial = 0
@@ -74,7 +74,6 @@ for p_error in np.arange(0.0,0.9,0.05):
             print(f"{'TO CHECK':30}")
             print("losses          ", losses)
             print("kept_qubits     ", kept_qubits)
-            exit()
             
             a = np.random.random()  + np.random.random() * 1j
             b = np.random.random()  + np.random.random() * 1j

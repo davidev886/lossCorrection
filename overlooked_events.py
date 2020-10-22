@@ -7,6 +7,8 @@ import qutip as qu
 from itertools import combinations
 
 from utils.p_operators import *
+from utils.qnd_detection import check_correctable_state
+
 
 from random import randint
 seme = randint(0,100)
@@ -15,11 +17,11 @@ np.random.seed(seme)
 
 print("\nseed:", seme)
 
-num_trials = 100
+num_trials = 1000
 
 final_p_error = []
 
-p_qnd = 0.05
+p_qnd = 0.01
 
 for p_error in np.arange(0.0,0.9,0.05):
     trial = 0
@@ -29,57 +31,51 @@ for p_error in np.arange(0.0,0.9,0.05):
     while trial < num_trials:
 
 #       1 means lost, 0 means not lost
-        random_loss = np.random.binomial(1, p_error, 7)
+        random_losses = np.random.binomial(1, p_error, 7)
 #       1 means qnd error
         qnd_errors = np.random.binomial(1, p_qnd, 7)
 
-        A_loss = (sum(random_loss) == 0)
-        B_loss = (sum(random_loss) == 1)
-        C_loss = (2 <= sum(random_loss) <= 4)
-        D_loss = (5 <= sum(random_loss) <= 7)
+        print("random_losses   ", random_losses)
+        print("qnd_errors      ", qnd_errors)        
 
-
-        A_qnd = (sum(qnd_errors) == 0)
-        B_qnd = (sum(qnd_errors) == 1)
-        C_qnd = (2 <= sum(qnd_errors) <= 4)
-        D_qnd = (5 <= sum(qnd_errors) <= 7)
-
-
-        correctable_events = (A_loss and A_qnd) or (A_loss and B_qnd) or (B_loss and A_qnd)
-        non_correctable_events = ( (A_loss and D_qnd)
-                                or (B_loss and (B_qnd or  C_qnd or D_qnd))
-                                or (C_loss and (B_qnd or  C_qnd or D_qnd))
-                                or D_loss )
-                                    
-        to_check_no_losses     = A_loss and C_qnd
-        to_check_no_qnd_errors = C_loss and A_qnd
+        dict_corr = check_correctable_state(random_losses, qnd_errors)
         
+        correctable_event = dict_corr["correctable"]
+        non_correctable_event = dict_corr["non_correctable_event"]
+        event_to_check = (correctable_event == False) and (non_correctable_event == False)
         
-        
-        if correctable_events:
+        if correctable_event:
             trial += 1
             correction_successful = True
             result_correction.append(correction_successful + 0)
-            num_losses.append(sum(random_loss))
+            num_losses.append(sum(random_losses))
             num_qnd_errors.append(sum(qnd_errors))
+            print(f"{'correctable_event':30}", correctable_event)
+
+            
             continue
-        elif non_correctable_events:
+        elif non_correctable_event:
             trial += 1
             correction_successful = False
             result_correction.append(correction_successful + 0)
-            num_losses.append(sum(random_loss))
+            num_losses.append(sum(random_losses))
             num_qnd_errors.append(sum(qnd_errors))            
+            print(f"{'NON correctable_event':30}", non_correctable_event)
             continue
-        elif to_check_no_losses or to_check_no_qnd_errors:
+        elif event_to_check:
             trial += 1
-            if to_check_no_losses:
-                #transform the wrongly detected losses in actual losses and make the correction
-                losses = np.where(qnd_errors)[0].tolist()
-            if to_check_no_qnd_errors:                
-                losses = np.where(random_loss)[0].tolist()                
+            #transform the wrongly detected losses in actual losses and make the correction            
+            losses_binary = [(loss + qnd_err) for loss, qnd_err in zip(random_losses, qnd_errors)]
+            
+            losses = np.where(losses_binary)[0].tolist()            
 
-            kept_qubits = list(set(range(L)) - set(losses))                
-                
+
+            kept_qubits = list(set(range(L)) - set(losses))      
+            print(f"{'TO CHECK':30}")
+            print("losses          ", losses)
+            print("kept_qubits     ", kept_qubits)
+            exit()
+            
             a = np.random.random()  + np.random.random() * 1j
             b = np.random.random()  + np.random.random() * 1j
 
@@ -139,47 +135,6 @@ for p_error in np.arange(0.0,0.9,0.05):
                     state_after_measure =  Px[meas] * state_after_measure * Px[meas] / prob_plus
                 else:
                     state_after_measure = Pmx[meas] * state_after_measure * Pmx[meas] / (1 - prob_plus)
-    ########################################################################
-                 
-            correction_qubits = [0, 4, 6]
-        
-    #         for j_stab, syndrome in enumerate(stabZ_eigenvalues):
-    #             if syndrome == -1:
-    #                 qubit_correction = permutation_order_q[correction_qubits[j_stab]]
-    #                 #print("Z syndrome corrected by X[", correction_qubits[j_stab], "]")
-    #                 #print("on the new state: Z syn ecorrected by X[", qubit_correction, "]")
-    #                 op_correction = X[qubit_correction]
-    #                 state_after_measure = op_correction * state_after_measure * op_correction   
-
-
-
-    #         for j_stab, syndrome in enumerate(stabX_eigenvalues):
-    #             if syndrome == -1:
-    #                 qubit_correction = permutation_order_q[correction_qubits[j_stab]]
-    #                 print("X syndrome corrected by Z[", correction_qubits[j_stab], "]")
-    #                 print("on the new state: X syn ecorrected by Z[", qubit_correction, "]")
-    #                 op_correction = Z[qubit_correction]
-    #                 state_after_measure = op_correction * state_after_measure * op_correction        
-
-#            print("before correction")                               
-#            print("Sz", [(state_after_measure * Sz[j]).tr() for j in range(3)])
-#            print("Sx", [(state_after_measure * Sx[j]).tr() for j in range(3)])    
-
-
-
-            if 0:
-                for corr in [6]:
-                    op_correction = X[permutation_order_q[corr]]
-                    state_after_measure = op_correction * state_after_measure * op_correction        
-
-                for corr in [1,3,5]:
-                    op_correction = Z[permutation_order_q[corr]]
-                    state_after_measure = op_correction * state_after_measure * op_correction   
-            
-                print("after correction")                               
-                print("Sz", [(state_after_measure * Sz[j]).tr() for j in range(3)])
-                print("Sx", [(state_after_measure * Sx[j]).tr() for j in range(3)])    
-    
                                                     
             state_after_measure = state_after_measure.unit()
         
@@ -205,7 +160,7 @@ for p_error in np.arange(0.0,0.9,0.05):
 
     final_p_error.append([p_error, p_qnd, np.mean(result_correction), np.std(result_correction), np.mean(num_losses), np.mean(num_qnd_errors)])
 
-np.savetxt(f"final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}.dat", final_p_error, fmt='%1.3f\t%1.3f\t' + '%1.6f\t' * 4)
+np.savetxt(f"data/final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}.dat", final_p_error, fmt='%1.3f\t%1.3f\t' + '%1.6f\t' * 4)
 final = np.array(final_p_error)
 
 import matplotlib.pyplot as plt
@@ -227,7 +182,7 @@ plt.plot(x_data, y_data, '-')
 
 plt.xlabel("p")
 plt.ylabel("p(success)")
-plt.savefig(f"final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}_seed_{seme}.pdf")
+plt.savefig(f"data/final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}_seed_{seme}.pdf")
 
 plt.show()
 

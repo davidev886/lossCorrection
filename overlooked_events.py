@@ -9,6 +9,10 @@ from itertools import combinations
 from utils.p_operators import *
 from utils.qnd_detection import check_correctable_state
 
+import os
+if not os.path.exists("data"):
+    os.makedirs("data")
+    
 
 from random import randint
 seme = randint(0,100)
@@ -17,7 +21,7 @@ np.random.seed(seme)
 
 print("\nseed:", seme)
 
-num_trials = 1000
+num_trials = 5000
 
 final_p_error = []
 
@@ -29,7 +33,7 @@ args = parser.parse_args()
 
 p_qnd = args.p_qnd
 
-for p_error in np.arange(0.0,0.9,0.05):
+for p_error in np.arange(0.0,0.95,0.05):
     trial = 0
     result_correction = []  
     num_losses = []
@@ -44,11 +48,7 @@ for p_error in np.arange(0.0,0.9,0.05):
         print("random_losses   ", random_losses)
         print("qnd_errors      ", qnd_errors)        
 
-        dict_corr = check_correctable_state(random_losses, qnd_errors)
-        
-        correctable_event = dict_corr["correctable"]
-        non_correctable_event = dict_corr["non_correctable_event"]
-        event_to_check = (correctable_event == False) and (non_correctable_event == False)
+        [correctable_event, non_correctable_event, to_check_event] = check_correctable_state(random_losses, qnd_errors)
         
         if correctable_event:
             trial += 1
@@ -57,8 +57,6 @@ for p_error in np.arange(0.0,0.9,0.05):
             num_losses.append(sum(random_losses))
             num_qnd_errors.append(sum(qnd_errors))
             print(f"{'correctable_event':30}", correctable_event)
-
-            
             continue
         elif non_correctable_event:
             trial += 1
@@ -68,7 +66,7 @@ for p_error in np.arange(0.0,0.9,0.05):
             num_qnd_errors.append(sum(qnd_errors))            
             print(f"{'NON correctable_event':30}", non_correctable_event)
             continue
-        elif event_to_check:
+        elif to_check_event:
             trial += 1
             #transform the wrongly detected losses in actual losses and make the correction            
             losses_binary = [(loss + qnd_err) for loss, qnd_err in zip(random_losses, qnd_errors)]
@@ -78,9 +76,7 @@ for p_error in np.arange(0.0,0.9,0.05):
 
             kept_qubits = list(set(range(L)) - set(losses))      
             print(f"{'TO CHECK':30}")
-            print("losses          ", losses)
-            print("kept_qubits     ", kept_qubits)
-            
+
             a = np.random.random()  + np.random.random() * 1j
             b = np.random.random()  + np.random.random() * 1j
 
@@ -161,7 +157,8 @@ for p_error in np.arange(0.0,0.9,0.05):
 
             done_trials = trial
             num_losses.append(len(losses))
-            num_qnd_errors.append(sum(qnd_errors))        
+            num_qnd_errors.append(sum(qnd_errors))     
+            print("done_trials", done_trials)   
 
     final_p_error.append([p_error, p_qnd, np.mean(result_correction), np.std(result_correction), np.mean(num_losses), np.mean(num_qnd_errors)])
 

@@ -33,7 +33,7 @@ args = parser.parse_args()
 
 p_qnd = args.p_qnd
 
-for p_error in np.arange(0.0,0.95,0.05):
+for p_error in np.arange(0.0, 0.2 + 1e-5, 1e-4): #for p_error in np.arange(0.0,0.95,0.05):
     trial = 0
     result_correction = []  
     num_losses = []

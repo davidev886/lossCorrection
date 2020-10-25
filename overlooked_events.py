@@ -21,7 +21,7 @@ np.random.seed(seme)
 
 print("\nseed:", seme)
 
-num_trials = 5000
+num_trials = 10000
 
 final_p_error = []
 
@@ -33,7 +33,7 @@ args = parser.parse_args()
 
 p_qnd = args.p_qnd
 
-for p_error in np.arange(0.0, 0.2 + 1e-5, 1e-4): #for p_error in np.arange(0.0,0.95,0.05):
+for p_error in np.arange(0,0.2+0.005, 0.005): #np.arange(0.0, 0.2 + 1e-5, 1e-4): #for p_error in np.arange(0.0,0.95,0.05):
     trial = 0
     result_correction = []  
     num_losses = []
@@ -162,7 +162,7 @@ for p_error in np.arange(0.0, 0.2 + 1e-5, 1e-4): #for p_error in np.arange(0.0,0
 
     final_p_error.append([p_error, p_qnd, np.mean(result_correction), np.std(result_correction), np.mean(num_losses), np.mean(num_qnd_errors)])
 
-np.savetxt(f"data/final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}.dat", final_p_error, fmt='%1.3f\t%1.3f\t' + '%1.6f\t' * 4)
+np.savetxt(f"data/final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}.dat", final_p_error, fmt='%1.5f\t%1.5f\t' + '%1.8f\t' * 4)
 final = np.array(final_p_error)
 
 import matplotlib.pyplot as plt

@@ -32,8 +32,8 @@ parser.add_argument('--p_qnd',  type=float, default=0.0, help = "probability of 
 args = parser.parse_args()
 
 p_qnd = args.p_qnd
-
-for p_error in np.arange(0,0.2+0.005, 0.005): #np.arange(0.0, 0.2 + 1e-5, 1e-4): #for p_error in np.arange(0.0,0.95,0.05):
+#for p_error in np.arange(0,0.2+0.005, 0.005): #np.arange(0.0, 0.2 + 1e-5, 1e-4): #
+for p_error in np.arange(0.0,0.95,0.05):
     trial = 0
     result_correction = []  
     num_losses = []
@@ -185,7 +185,7 @@ plt.plot(x_data, y_data, '-')
 plt.xlabel("p")
 plt.ylabel("p(success)")
 plt.savefig(f"data/final_qnd_faulty_{num_trials}_pqnd_{p_qnd:1.3f}_seed_{seme}.pdf")
-plt.title("$p_\mathrm{qnd} = " +  f"{p_qnd:1.2f}$")
+plt.title("$p_\mathrm{qnd} = " +  f"{p_qnd:1.5f}$")
 plt.show()
 
 exit()

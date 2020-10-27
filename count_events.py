@@ -13,15 +13,17 @@ import os
 if not os.path.exists("data"):
     os.makedirs("data")
 
-#print(list(generate_configuration_loss_qnderror(0, 1)))
+binary_conf = binary_configurations()    
+#print(list(binary_conf.generate_configuration_loss_qnderror(0, 1)))
 count_correctable_dic = {}
 for num_l in range(8):
     for num_q in range(5-num_l):
         count_correctable = 0
         print(num_l, num_q)
-        for random_losses, qnd_errors in generate_configuration_loss_qnderror(num_l, num_q):
+        loss_error_conf = binary_conf.generate_configuration_loss_qnderror(num_l, num_q)
+        for random_losses, qnd_errors in loss_error_conf:
             [correctable, non_correctable] = check_correctable_state_analytics(random_losses, qnd_errors)
-#                print(random_losses, qnd_errors, [correctable, non_correctable])
+            print(random_losses, qnd_errors, [correctable, non_correctable])
             if correctable:
                 count_correctable += 1
         count_correctable_dic[(num_l, num_q)] = count_correctable

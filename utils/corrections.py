@@ -1,5 +1,5 @@
 import numpy as np
-
+from utils.p_operators import *
 
 def check_correctable_state_analytics(random_losses, qnd_errors):
 
@@ -47,8 +47,26 @@ def check_correctable_state_analytics(random_losses, qnd_errors):
 
     return [correctable, non_correctable]
     
-    
-    
+def check_stabilizers_measurement(random_losses, qnd_errors, stab_errors_binary):
+    [correctable_0, non_correctable_0] = check_correctable_state_analytics(random_losses, qnd_errors)
+    if non_correctable_0:
+        return [correctable_0, non_correctable_0]
+    else:
+        #Stabilizer that are affected by a measurement error
+        faulty_stab_qubits = [el for j,el in enumerate(stab_qubits) if stab_errors_binary[j]]
+
+        position_loss = np.where(random_losses)[0].tolist()
+        position_qnd = np.where(qnd_errors)[0].tolist()
+
+        guessed_loss = [(loss + qnd_err) % 2 for loss, qnd_err in zip(random_losses, qnd_errors)]
+        position_guessed_loss = np.where(guessed_loss)[0].tolist() 
+
+
+        correctable = not (any([any([(loss in stab) for loss in position_guessed_loss]) for stab in faulty_stab_qubits]))
+        print(f"{'correctable':40}",  correctable)
+        return [correctable, not correctable]
+        
+                
     
 def check_correctable_state(random_losses, qnd_errors):
     """

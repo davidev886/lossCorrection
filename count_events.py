@@ -7,7 +7,7 @@ import qutip as qu
 from itertools import combinations, product
 
 from utils.p_operators import *
-from utils.qnd_detection import *
+from utils.binary_conf import *
 from utils.correction import *
 
 import os

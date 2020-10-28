@@ -8,7 +8,7 @@ from itertools import combinations, product
 
 from utils.p_operators import *
 from utils.binary_conf import *
-from utils.correction import *
+from utils.corrections import *
 
 import os
 if not os.path.exists("data"):

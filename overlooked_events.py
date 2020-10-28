@@ -7,7 +7,7 @@ import qutip as qu
 from itertools import combinations
 
 from utils.p_operators import *
-from utils.correction import check_correctable_state
+from utils.corrections import check_correctable_state
 
 import os
 if not os.path.exists("data"):

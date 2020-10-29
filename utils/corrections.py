@@ -61,9 +61,8 @@ def check_stabilizers_measurement(random_losses, qnd_errors, stab_errors_binary)
         guessed_loss = [(loss + qnd_err) % 2 for loss, qnd_err in zip(random_losses, qnd_errors)]
         position_guessed_loss = np.where(guessed_loss)[0].tolist() 
 
-
         correctable = not (any([any([(loss in stab) for loss in position_guessed_loss]) for stab in faulty_stab_qubits]))
-        print(f"{'correctable':40}",  correctable)
+
         return [correctable, not correctable]
         
                 

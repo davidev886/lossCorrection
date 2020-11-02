@@ -47,14 +47,13 @@ for p_loss in np.arange(0.0,0.95,0.05):
         random_losses = np.random.binomial(1, p_loss, 7)
 #       1 means qnd error
         qnd_errors = generate_qnd_error_fpn(random_losses, fp_prob, fn_prob)
-#        print(qnd_errors)
 
         print("random_losses   ", random_losses)
         print("qnd_errors      ", qnd_errors)        
 
         [correctable_event, non_correctable_event] = check_correctable_state_analytics(random_losses, qnd_errors)
         print(check_correctable_state_analytics(random_losses, qnd_errors))
-#        if non_correctable_event: exit()
+
         if correctable_event:
             trial += 1
             correction_successful = True

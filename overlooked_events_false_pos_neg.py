@@ -22,20 +22,23 @@ np.random.seed(seme)
 
 print("\nseed:", seme)
 
-num_trials = 1000
+num_trials = 5000
 
 final_p_error = []
 
 import argparse
 #python overlooked_events.py --p_qnd 
-parser = argparse.ArgumentParser(description = "Simulate qubit losses and qnd error with a phenomenological model")
-parser.add_argument('--p_qnd',  type=float, default=0.0, help = "probability of a false negative")
+parser = argparse.ArgumentParser(description = "Simulate qubit losse correction with faulty qnd loss detection unit")
+parser.add_argument('--fp',  type=float, default=0.05, help = "probability of a false positive")
+parser.add_argument('--fn',  type=float, default=None, help = "probability of a false positive")
 args = parser.parse_args()
 
-#p_qnd = args.p_qnd
-fp_prob = 0.01
-fn_prob = fp_prob / 2
-#for p_loss in np.arange(0,0.2+0.005, 0.005): #np.arange(0.0, 0.2 + 1e-5, 1e-4): #
+fp_prob = args.fp
+fn_prob = args.fn
+
+if not fn_prob:
+    fn_prob = fp_prob / 5
+
 for p_loss in np.arange(0.0,0.95,0.05):
     trial = 0
     result_correction = []  
@@ -95,8 +98,9 @@ plt.plot(x_data, y_data, '-')
 
 plt.xlabel("p")
 plt.ylabel("p(success)")
+plt.title("$p_\mathrm{fp} = " +  f"{fp_prob:1.3f}$" + " $p_\mathrm{fn} = " f"{fn_prob:1.3f}$")
 plt.savefig(f"data/final_qnd_faulty_{num_trials}_fp_{fp_prob:1.3f}_fn_{fn_prob:1.3f}.pdf")
-plt.title("$p_\mathrm{qnd} = " +  f"{fp_prob:1.3f} / " +  f"{fn_prob:1.3f}$")
+
 plt.show()
 
 exit()

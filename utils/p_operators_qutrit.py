@@ -5,11 +5,11 @@ L = 7 + 1
 
 Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
 
-x_qutrit = qu.Qobj([[0,1,0] , [1,0,0], [0,0,0]])
+x_qutrit = qu.Qobj([[0,1,0] , [1,0,0], [0,0,1]])
 
-y_qutrit = qu.Qobj([[0,-1j,0] , [1j,0,0], [0,0,0]])
+y_qutrit = qu.Qobj([[0,-1j,0] , [1j,0,0], [0,0,1]])
 
-z_qutrit = qu.Qobj([[1,0,0] , [0,-1,0], [0,0,0]])
+z_qutrit = qu.Qobj([[1,0,0] , [0,-1,0], [0,0,1]])
 
 temp = [[qu.qeye(3)] * j + [x_qutrit] + [qu.qeye(3)] * (L - j -1) + [qu.qeye(2)] for j in range(L)]
 X = [qu.tensor(temp[j]) for j in range(L)]
@@ -40,3 +40,4 @@ vacuum = qu.tensor([qu.basis(3,0)] * L + [qu.basis(2,0)])
 #logical states
 ZeroL = (Px[0] * Px[1] * Px[2] * vacuum).unit()
 OneL = (XL * ZeroL).unit()
+

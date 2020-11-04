@@ -61,6 +61,43 @@ class binary_configurations_loss_qnd_stab(object):
     
         return product(configuration_loss, configuration_qnd, configurations_stab)        
         
+        
+
+class binary_configurations_false_pn(object):
+    def __init__(self, n = 7, stab = 3 ):
+        self.n = n
+        configurations = {}
+        for i in range(2**n):
+            configuration_str = bin(i)[2:].zfill(n)
+            configuration_int = [int(_) for _ in configuration_str]
+            num_particles = sum(configuration_int)
+            if num_particles in configurations:
+                configurations[num_particles].append(configuration_int)
+            else:
+                configurations[num_particles]= [configuration_int]
+        self.configurations = configurations
+
+        configurations_stab = {}
+        for i in range(2**stab):
+            configuration_str = bin(i)[2:].zfill(stab)
+            configuration_int = [int(_) for _ in configuration_str]
+            num_particles = sum(configuration_int)
+            if num_particles in configurations_stab:
+                configurations_stab[num_particles].append(configuration_int)
+            else:
+                configurations_stab[num_particles]= [configuration_int]
+        self.configurations_stab = configurations_stab
+        
+    def generate_configuration_loss_qnderror(self, num_l, num_q, num_stab):
+        configuration_loss = []
+        configuration_qnd = []
+        configuration_loss = self.configurations[num_l]
+        configuration_qnd = self.configurations[num_q]   
+        configurations_stab = self.configurations_stab[num_stab]   
+    
+        return product(configuration_loss, configuration_qnd, configurations_stab) 
+        
+                
 
 def check_correctable_state_analytics(random_losses, qnd_errors):
 

@@ -9,23 +9,8 @@ import numpy as np
 import qutip as qu
 
 from itertools import product
+from p_operators_qutrit import proj
 
-
-def proj(ket, bra, dimH = 2):
-    if isinstance(ket, str):
-        states_ket = [int(_) for _ in ket]
-        ket_s = qu.basis([dimH] * len(states_ket), states_ket)        
-    elif isinstance(ket, int):
-        states_ket = ket
-        ket_s = qu.basis(dimH, states_ket)        
-    if isinstance(bra, str):
-        states_bra = [int(_) for _ in bra]
-        bra_s = qu.basis([dimH] * len(states_bra), states_bra).dag()
-    elif isinstance(bra, int):
-        states_bra = bra
-        bra_s = qu.basis(dimH, states_bra).dag()
-           
-    return ket_s * bra_s
 
 
 def apply_choi(rho, choiState):

@@ -1,25 +1,6 @@
 import qutip as qu
+import numpy as np
 
-def proj(ket, bra, dimH = 2):
-    if isinstance(ket, str):
-        states_ket = [int(_) for _ in ket]
-        ket_s = qu.basis([dimH] * len(states_ket), states_ket)        
-    elif isinstance(ket, int):
-        states_ket = ket
-        ket_s = qu.basis(dimH, states_ket)        
-    if isinstance(bra, str):
-        states_bra = [int(_) for _ in bra]
-        bra_s = qu.basis([dimH] * len(states_bra), states_bra).dag()
-    elif isinstance(bra, int):
-        states_bra = bra
-        bra_s = qu.basis(dimH, states_bra).dag()
-           
-    return ket_s * bra_s
-
-def Rloss(phi):
-    dimH = 3
-    return proj(1, 1, dimH) + np.cos(phi/2) * (proj(0, 0, dimH) + proj(2 ,2, dimH)) 
-                + np.sin(phi/2) * (proj(0, 2, dimH) - proj(2, 0, dimH))
 
 
 #ancilla always the last qubit
@@ -63,4 +44,34 @@ vacuum = qu.tensor([qu.basis(3,0)] * L + [qu.basis(2,0)])
 ZeroL = (Px[0] * Px[1] * Px[2] * vacuum).unit()
 OneL = (XL * ZeroL).unit()
 
+
+def proj(ket, bra, dimH = 2):
+    if isinstance(ket, str):
+        states_ket = [int(_) for _ in ket]
+        ket_s = qu.basis([dimH] * len(states_ket), states_ket)        
+    elif isinstance(ket, int):
+        states_ket = ket
+        ket_s = qu.basis(dimH, states_ket)        
+    if isinstance(bra, str):
+        states_bra = [int(_) for _ in bra]
+        bra_s = qu.basis([dimH] * len(states_bra), states_bra).dag()
+    elif isinstance(bra, int):
+        states_bra = bra
+        bra_s = qu.basis(dimH, states_bra).dag()
+           
+    return ket_s * bra_s
+
+def Rloss(phi):
+    # return  a list with 7 Rloss gates one for each data qutrit
+    dimHq = 3 # Hilbert space data qutrit
+    
+    dimHa = 2 # Hilbert space ancilla qubit
+    
+    rloss = (proj(1, 1, dimHq) + np.cos(phi/2) * (proj(0, 0, dimHq) + proj(2 ,2, dimHq)) 
+                + np.sin(phi/2) * (proj(0, 2, dimHq) - proj(2, 0, dimHq)) )
+    
+    temp = [[qu.qeye(dimHq)] * j + [rloss] + [qu.qeye(dimHq)] * (L - j -1) + [qu.qeye(dimHa)] for j in range(L)]
+    R_loss_list = [qu.tensor(temp[j]) for j in range(L)]    
+    
+    return R_loss_list
     

@@ -1,7 +1,38 @@
 import qutip as qu
 import numpy as np
+from numpy import linalg as LA
 
+_lambdas_GM = [[[ 1, 0, 0], [ 0, 1, 0], [0, 0, 1]],
+             [[ 0 , 1 , 0], [1 , 0 , 0], [0 , 0 , 0 ]],
+             [[ 0 , -1j , 0], [1j , 0 , 0], [0 , 0 , 0 ] ],
+             [[ 1 , 0 , 0], [0 , -1 , 0], [0 , 0 , 0 ] ],
+             [[ 0 , 0 , 1], [0 , 0 , 0], [1 , 0 , 0 ] ],
+             [[ 0 , 0 , -1j], [0 , 0 , 0], [1j , 0 , 0 ] ],
+             [[ 0 , 0 , 0], [0 , 0 , 1], [0 , 1 , 0 ] ],
+             [[ 0 , 0 , 0], [0 , 0 , -1j], [0 , 1j , 0 ] ],
+             [[ 1 , 0 , 0], [0 , 1 , 0], [0 , 0 , -2 ]]]
+             
+_sigmas_P =   [[[1,  0],  [0, 1]], 
+             [[0,  1],  [1, 0]], 
+             [[0, -1j], [1j,0]], 
+             [[1,0], [0,-1]]]
+             
+def give_transformation_matrix()
+    basis_elements_list = []
+    for _lambda in _lambdas_GM:
+        for _sigma in _sigmas_P:
+        
+            basis_element = (qu.tensor(qu.Qobj(_sigma), qu.Qobj(_lambda))).full()
+            print(basis_element)
 
+            vector_basis = basis_element.reshape(1,36)[0]
+
+            normalized_vector = vector_basis / LA.norm(vector_basis)
+            print(normalized_vector)
+            basis_elements_list.append(normalized_vector.tolist())
+
+    T_matrix = (np.array(basis_elements_list)).T
+    return T_matrix
 
 #ancilla always the last qubit
 L = 7 + 1

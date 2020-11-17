@@ -80,7 +80,26 @@ def proj(ket, bra, dimH = 2):
            
     return ket_s * bra_s
 
-def Rloss(phi):
+def Rloss(initial_state, phi, qu_data):
+    if initial_state.type == "ket":
+        initial_state = initial_state * initial_state.dag()
+        
+    dimHq = 3 # Hilbert space data qutrit
+    
+    dimHa = 2 # Hilbert space ancilla qubit
+    
+    rloss = (proj(1, 1, dimHq) + np.cos(phi/2) * (proj(0, 0, dimHq) + proj(2 ,2, dimHq)) 
+                + np.sin(phi/2) * (proj(0, 2, dimHq) - proj(2, 0, dimHq)) )
+    
+    rot_temp = [qu.qeye(dimHq)] * qu_data + [rloss] + [qu.qeye(dimHq)] * (L - qu_data - 1) + [qu.qeye(dimHa)]
+    
+    rot = qu.tensor(rot_temp)
+    
+    return rot * initial_state * rot.dag()
+    
+
+
+def Rloss_all(phi):
     # return  a list with 7 Rloss gates one for each data qutrit
     dimHq = 3 # Hilbert space data qutrit
     
@@ -99,7 +118,8 @@ def normalize_operators(matrices):
              
 def give_transformation_matrix():
     basis_elements_list = []
-    #the order of these for loops is important to define the T_matrix
+    # the order of these for loops is important to define the T_matrix because the convention is
+    # sigma_j x lambda_k in the choi matrix we get from experiments
     for j in range(len(_sigmas_P)):    
         for i in range(len(_lambdas_GM)):
             _lambda = _lambdas_GM[i]
@@ -148,10 +168,10 @@ def apply_qnd_process_unit(choi, state_total, qu_data):
     np.savetxt("T_matrix.dat", T_matrix, fmt="%1.4f")
 
     chi_matrix = get_chi_from_choi(choi, T_matrix)
-    np.savetxt("chi_matrix.dat", chi_matrix.real, fmt="%1.5f")
-    op_label = [[str(_) for _ in range(36)]] * 2 
-    fig, ax = qu.qpt_plot_combined(chi_matrix / 6,op_label)
-    plt.show()
+#    np.savetxt("chi_matrix.dat", chi_matrix.real, fmt="%1.5f")
+#    op_label = [[str(_) for _ in range(36)]] * 2 
+#    fig, ax = qu.qpt_plot_combined(chi_matrix / 6,op_label)
+#    plt.show()
     on_basis_lambda = normalize_operators(_lambdas_GM)
     on_basis_Pauli = normalize_operators(_sigmas_P)
 
@@ -181,13 +201,12 @@ if __name__ == "__main__":
 #    on_basis_lambda = normalize_operators(_lambdas_GM)
 #    on_basis_Pauli = normalize_operators(_sigmas_P)
     choi_ideal = np.loadtxt("choiFinal_ideal.dat")
-    print("qui")
     a = np.random.random()  + np.random.random() * 1j
     b = np.random.random()  + np.random.random() * 1j
-    state_qutrit = (a * qu.basis(3,0) + b * qu.basis(3,1)).unit()
-    state_total = (qu.tensor([state_qutrit] + [qu.basis(2,0)])).unit()
-
-    final = apply_qnd_process_unit(choi_ideal, state_total, qu_data = 0)
-    np.savetxt("final.dat", final.full())
-    np.savetxt("initial.dat", state_total * state_total.dag().full())
+    state_qutrit = qu.basis(3,0) # (a * qu.basis(3,0) + b * qu.basis(3,1)).unit()
+    initial_state = (qu.tensor([state_qutrit] + [qu.basis(3,0)] * (L - 1) + [qu.basis(2,0)])).unit()
+    final = Rloss(initial_state, np.pi / 2.0, qu_data = 0)
+#    final = apply_qnd_process_unit(choi_ideal, state_total, qu_data = 0)
+    np.savetxt("final.dat", final.full(), fmt="% 1.4f")
+    np.savetxt("initial.dat", initial_state * initial_state.dag().full(), fmt="% 1.4f")
     

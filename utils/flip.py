@@ -6,6 +6,16 @@ _sigmas_P =   [[[1,  0],  [0, 1]],
              [[0,  1],  [1, 0]], 
              [[0, -1j], [1j,0]], 
              [[1,0], [0,-1]]]
+             
+
+
+def bit_flip_channel(p):
+    X = sigmax()
+    I = qeye(2)
+    return (1-p) * sprepost(I, I)  + p * sprepost(X, X) 
+    
+
+             
 np.set_printoptions(precision=4,suppress=True)
 
 def choiFlip(p):
@@ -52,7 +62,7 @@ def orthonormal_basis_operator(T_matrix):
 def get_chi_from_choi(choi, T_matrix):
     return np.dot(T_matrix, np.dot(choi, T_matrix.conj().T))
     
-def apply_qnd_process_unit(choi, state_total, qu_data, qu_ancilla = 7):
+def apply_qnd_process_unit(choi, state_total):
     T_matrix = give_transformation_matrix()
     chi_matrix = get_chi_from_choi(choi, T_matrix)
     on_basis_Pauli = normalize_operators(_sigmas_P)
@@ -72,5 +82,15 @@ state_t = qu.basis(2,0) * qu.basis(2,0).dag()
 
 choi = choiFlip(0.3)
 
-final_state = apply_qnd_process_unit(choi, state_t, 2, qu_ancilla = 7)
+final_state = apply_qnd_process_unit(choi, state_t)
 print(final_state)
+
+
+#function of qutip
+print(to_choi(bit_flip_channel(0.3)))
+
+chi_matrix = to_chi(to_choi(bit_flip_channel(0.3)))
+
+print(chi_matrix.shape)
+
+

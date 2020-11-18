@@ -48,6 +48,10 @@ Xa = qu.tensor(temp)
 temp = [qu.qeye(3)] * L + [qu.sigmaz()]
 Za = qu.tensor(temp)
 
+Pp_ancilla = (Id + Za) / 2
+Pm_ancilla = (Id - Za) / 2    
+    
+    
 
 if L == 7:
     stab_qubits = [[0,1,2,3], [1,2,4,5], [2,3,5,6]]

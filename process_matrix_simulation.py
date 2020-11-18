@@ -20,13 +20,16 @@ np.random.seed(seme)
 
 print("\nseed:", seme)
 
-
-
 choi_ideal = np.loadtxt("choiFinal_ideal.dat")
+
+choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
+
+epsilon_choi = 0.05
+choi = (1 - epsilon_choi) * choi_ideal + epsilon_choi * choi_experiment
 
 final_p_loss = []
 
-num_trials = 20
+num_trials = 50
 
 
 for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
@@ -34,7 +37,7 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
     result_correction = []
     num_losses = []
     for trial in range(num_trials):
-        print(f"trial={trial + 1: 5d} out of {num_trials}")    
+        print(f"trial={trial + 1: 5d} out of {num_trials}, phi={phi_tilde:1.2}")    
         loss_pattern = []
 
         a_0 = np.random.random()  + np.random.random() * 1j
@@ -50,7 +53,7 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
             #apply Rloss with an angle phi
             rho_L = Rloss(psiL, phi, data_q)
 
-            rho_L = apply_qnd_process_unit(choi_ideal, rho_L, qu_data = data_q)
+            rho_L = apply_qnd_process_unit(choi, rho_L, qu_data = data_q)
     
         #    print(rho_L.tr())
 
@@ -69,7 +72,8 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
 
         stabZ_eigenvalues = []
         for meas in range(3):
-            prob_plus =  (Pz[meas] * state_after_measure).tr()
+            #TO DO ADD a check on the imaginary part of prob_plus that should be VERY small
+            prob_plus =  abs((Pz[meas] * state_after_measure).tr())
             if prob_plus > 1: prob_plus = 1
             if prob_plus < 0: prob_plus = 0    
 
@@ -83,7 +87,7 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
 
         stabX_eigenvalues = []
         for meas in range(3):
-            prob_plus =  (Px[meas] * state_after_measure).tr()
+            prob_plus =  abs((Px[meas] * state_after_measure).tr())
             if prob_plus > 1: prob_plus = 1
             if prob_plus < 0: prob_plus = 0    
             result = 2 * np.random.binomial(1, prob_plus) - 1
@@ -122,4 +126,4 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
 
 
 
-np.savetxt(final_data_name + f"_loss_process_matrix_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
+np.savetxt(final_data_name + f"_loss_process_matrix_ideal_real_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')

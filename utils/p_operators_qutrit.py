@@ -21,7 +21,7 @@ _sigmas_P =   [[[1,  0],  [0, 1]],
              
     
 #ancilla always the last qubit
-L = 1
+L = 7
 ancilla_num = 1
 
 Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
@@ -40,6 +40,14 @@ Y = [qu.tensor(temp[j]) for j in range(L)]
 
 temp = [[qu.qeye(3)] * j + [z_qutrit] + [qu.qeye(3)] * (L - j - 1) + [qu.qeye(2)] for j in range(L)]
 Z = [qu.tensor(temp[j]) for j in range(L)]
+
+#ancilla operators
+temp = [qu.qeye(3)] * L + [qu.sigmax()]
+Xa = qu.tensor(temp)
+
+temp = [qu.qeye(3)] * L + [qu.sigmaz()]
+Za = qu.tensor(temp)
+
 
 if L == 7:
     stab_qubits = [[0,1,2,3], [1,2,4,5], [2,3,5,6]]

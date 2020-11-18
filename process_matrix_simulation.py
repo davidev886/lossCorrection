@@ -5,6 +5,11 @@ import qutip as qu
 
 from utils.qnd_error_gen import pick_qnd_error
 
+import datetime
+now = datetime.datetime.now()
+final_data_name = now.strftime("%Y%m%d%H%M")
+
+
 from utils.p_operators_qutrit import *
 
 from random import randint
@@ -15,13 +20,6 @@ np.random.seed(seme)
 
 print("\nseed:", seme)
 
-a_0 = np.random.random()  + np.random.random() * 1j
-b_0 = np.random.random()  + np.random.random() * 1j
-
-a = a_0 / np.sqrt(abs(a_0)**2 + abs(b_0)**2)
-b = b_0 / np.sqrt(abs(a_0)**2 + abs(b_0)**2)
-
-psiL = a * ZeroL + b * OneL
 
 
 choi_ideal = np.loadtxt("choiFinal_ideal.dat")
@@ -31,13 +29,22 @@ final_p_loss = []
 num_trials = 20
 
 
-for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30]:
+for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
     phi = phi_tilde * np.pi 
     result_correction = []
     num_losses = []
     for trial in range(num_trials):
         print(f"trial={trial + 1: 5d} out of {num_trials}")    
         loss_pattern = []
+
+        a_0 = np.random.random()  + np.random.random() * 1j
+        b_0 = np.random.random()  + np.random.random() * 1j
+
+        a = a_0 / np.sqrt(abs(a_0)**2 + abs(b_0)**2)
+        b = b_0 / np.sqrt(abs(a_0)**2 + abs(b_0)**2)
+
+        psiL = a * ZeroL + b * OneL
+
         for data_q in range(L):
 
             #apply Rloss with an angle phi
@@ -111,10 +118,8 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30]:
 
 
     final_p_loss.append([phi, np.mean(result_correction), np.std(result_correction), np.mean(num_losses)])
-
-import datetime
-now = datetime.datetime.now()
-final_data_name = now.strftime("%Y%m%d%H%M")
+    np.savetxt(final_data_name + f"_loss_process_matrix_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
 
 
-np.savetxt(final_data_name + f"loss_process_matrix_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
+
+np.savetxt(final_data_name + f"_loss_process_matrix_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')

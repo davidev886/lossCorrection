@@ -102,7 +102,7 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30]:
         print("qu.expect(XL, state_after_measure)", stabX_eigenvalues,f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
 
         result_correction.append(correction_successful + 0)
-        num_losses.append(len(loss_pattern))
+        num_losses.append(sum(loss_pattern))
     
 
 

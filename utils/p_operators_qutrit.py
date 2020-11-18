@@ -125,8 +125,8 @@ def Rloss_all(phi):
     
     return R_loss_list
 
-def normalize_operators(matrices):
-    return [qu.Qobj(np.array(el) / LA.norm(el)) for el in matrices]
+def normalize_operators(matrices_list):
+    return [qu.Qobj(np.array(el) / LA.norm(el)) for el in matrices_list]
              
 def give_transformation_matrix():
     basis_elements_list = []
@@ -180,10 +180,7 @@ def apply_qnd_process_unit(choi, state_total, qu_data):
     np.savetxt("T_matrix.dat", T_matrix, fmt="%1.4f")
 
     chi_matrix = get_chi_from_choi(choi, T_matrix)
-#    np.savetxt("chi_matrix.dat", chi_matrix.real, fmt="%1.5f")
-#    op_label = [[str(_) for _ in range(36)]] * 2 
-#    fig, ax = qu.qpt_plot_combined(chi_matrix / 6,op_label)
-#    plt.show()
+
     on_basis_lambda = normalize_operators(_lambdas_GM)
     on_basis_Pauli = normalize_operators(_sigmas_P)
 

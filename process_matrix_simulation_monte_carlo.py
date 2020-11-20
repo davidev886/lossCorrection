@@ -15,7 +15,7 @@ from utils.p_operators_qutrit import *
 from random import randint
 seme = randint(0,100)
 
-#seme=72
+seme=35
 np.random.seed(seme)
 
 print("\nseed:", seme)
@@ -24,20 +24,20 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
-epsilon_choi = 0.05
+epsilon_choi = 0.0
 choi = (1 - epsilon_choi) * choi_ideal + epsilon_choi * choi_experiment
 
 final_p_loss = []
 
-num_trials = 50
+num_trials = 20
 
 
-for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
+for phi_tilde in np.arange(0.05, 1.05, 0.05):
     phi = phi_tilde * np.pi 
     result_correction = []
     num_losses = []
     for trial in range(num_trials):
-        print(f"trial={trial + 1: 5d} out of {num_trials}, phi={phi_tilde:1.2}")    
+        print(f"trial={trial + 1: 5d} out of {num_trials}, phi={phi_tilde:1.2}")
         loss_pattern = []
 
         a_0 = np.random.random()  + np.random.random() * 1j
@@ -66,7 +66,37 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
             if QND_outcome == 0:
                 rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / p_0
             elif QND_outcome == 1:
-                rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / (1 - p_0)    
+                rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / (1 - p_0)
+
+        losses = np.where(loss_pattern)[0].tolist()
+        kept_qubits = list(set(range(L)) - set(losses))
+
+        if sum(losses) == 7:
+            correction_successful = False
+            result_correction.append(correction_successful + 0)
+            num_losses.append(sum(loss_pattern))        
+            continue 
+        w_0 = rho_L.ptrace(kept_qubits)
+        rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
+
+        permutation_order_q = {}
+        for j, el in enumerate(losses + kept_qubits):
+            permutation_order_q[el] = j
+#        print("permutation_order_q", permutation_order_q)
+
+        stab_qubits_new_order = []
+        for stab in stab_qubits:
+            stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
+            print(stab, [permutation_order_q[q] for q in stab])
+
+        Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+        Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+
+        Px = [(Id + el) / 2 for el in Sx]
+        Pz = [(Id + el) / 2 for el in Sz]
+
+        Pmx = [(Id - el) / 2 for el in Sx]
+        Pmz = [(Id - el) / 2 for el in Sz]
 
         state_after_measure = rho_L
 
@@ -121,9 +151,9 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45]:
     print(result_correction)
 
 
-    final_p_loss.append([phi, np.mean(result_correction), np.std(result_correction), np.mean(num_losses)])
-    np.savetxt(final_data_name + f"_loss_process_matrix_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
+    final_p_loss.append([phi_tilde, phi, np.sin(phi/2)**2/2, np.mean(result_correction), np.std(result_correction), np.mean(num_losses)])
+    np.savetxt(final_data_name + f"_loss_process_matrix_ideal_real_trials_{num_trials}_eps_{epsilon_choi:1.2f}.dat", final_p_loss, fmt='%1.6f')
 
 
 
-np.savetxt(final_data_name + f"_loss_process_matrix_ideal_real_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
+np.savetxt(final_data_name + f"_loss_process_matrix_ideal_real_trials_{num_trials}_eps_{epsilon_choi:1.2f}.dat", final_p_loss, fmt='%1.6f')

@@ -29,23 +29,19 @@ choi = (1 - epsilon_choi) * choi_ideal + epsilon_choi * choi_experiment
 
 final_p_loss = []
 
-num_trials = 2
 
 index_confs = 0
 for num_loss, loss_confs in binary_configurations().configurations.items():  
-    for outcome_ancillas in loss_confs:
-        index_confs += 1
-        print(index_confs)
-        projectors_ancilla = 1 - 2*np.array(outcome_ancillas)
-        print(outcome_ancillas, projectors_ancilla)
-exit()
-for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45, 0.50, 0.55, 0.60, 0.75, 0.80, 0.]:
-    phi = phi_tilde * np.pi 
     result_correction = []
     num_losses = []
-    for trial in range(num_trials):
-        
-        print(f"trial={trial + 1: 5d} out of {num_trials}, phi={phi_tilde:1.2}")    
+
+    for outcomes_ancilla in loss_confs:
+        index_confs += 1
+
+        projectors_ancilla = 1 - 2*np.array(outcomes_ancilla)
+
+#        phi = phi_tilde * np.pi 
+
         loss_pattern = []
 
         a_0 = np.random.random()  + np.random.random() * 1j
@@ -55,30 +51,32 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45, 0.50, 0.55, 0.
         b = b_0 / np.sqrt(abs(a_0)**2 + abs(b_0)**2)
 
         psiL = a * ZeroL + b * OneL
-
+        print("outcomes_ancilla", outcomes_ancilla)
         for data_q in range(L):
 
             #apply Rloss with an angle phi
-            rho_L = Rloss(psiL, phi, data_q)
+#            rho_L = Rloss(psiL, phi, data_q)
 
-            rho_L = apply_qnd_process_unit(choi, rho_L, qu_data = data_q)
+            rho_L = apply_qnd_process_unit(choi, psiL, qu_data = data_q)
     
-        #    print(rho_L.tr())
+            if projectors_ancilla[data_q] == +1:
+                prob_outcome = (rho_L * Pp_ancilla).tr()
+                rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
+            elif  projectors_ancilla[data_q] == -1:
+                prob_outcome = (rho_L * Pp_ancilla).tr()            
+                rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome                 
 
-            p_0 = (rho_L * Pp_ancilla).tr()
-            if p_0 >= 1: p_0 = 1
-            if p_0 <= 0: p_0 = 0
-            QND_outcome = np.random.binomial(1, 1 - p_0)
-            loss_pattern.append(QND_outcome)
-            print(f"p_0={p_0:1.3f}", f"QND_outcome={QND_outcome}", f"p1={1-p_0:1.4f}",f"p_loss={np.sin(phi/2)**2/2:1.4f}")
-            if QND_outcome == 0:
-                rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / p_0
-            elif QND_outcome == 1:
-                rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / (1 - p_0)  
-                  
+            loss_pattern.append(outcomes_ancilla[data_q])
+            print(index_confs, f"prob_outcome={prob_outcome:1.3f}", f"QND_outcome={outcomes_ancilla[data_q]}")
+            
+
         losses = np.where(loss_pattern)[0].tolist()
         kept_qubits = list(set(range(L)) - set(losses))
         
+        if sum(losses) == 7:
+            correction_successful = False
+            result_correction.append(correction_successful + 0)
+            continue 
 
         w_0 = rho_L.ptrace(kept_qubits)
         rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
@@ -91,7 +89,7 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45, 0.50, 0.55, 0.
         stab_qubits_new_order = []
         for stab in stab_qubits:
             stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
-            print(stab, [permutation_order_q[q] for q in stab])
+            #print(stab, [permutation_order_q[q] for q in stab])
 
         Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
         Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
@@ -146,18 +144,8 @@ for phi_tilde in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.45, 0.50, 0.55, 0.
         print("qu.expect(ZL, state_after_measure)", stabZ_eigenvalues, f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
         print("qu.expect(XL, state_after_measure)", stabX_eigenvalues,f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
 
-        result_correction.append(correction_successful + 0)
-        num_losses.append(sum(loss_pattern))
-    
+        final_p_loss.append([int(bin(index_confs - 1)[2:]), int(correction_successful), num_loss])
+        print(final_p_loss)
+        np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%07d\t' + '%d\t' * 2)
 
-
-    print("result_correction")
-    print(result_correction)
-
-
-    final_p_loss.append([phi, np.mean(result_correction), np.std(result_correction), np.mean(num_losses)])
-    np.savetxt(final_data_name + f"_loss_process_matrix_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
-
-
-
-np.savetxt(final_data_name + f"_loss_process_matrix_ideal_real_trials_{num_trials}.dat", final_p_loss, fmt='%1.6f')
+np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%07d\t' + '%d\t' * 2)

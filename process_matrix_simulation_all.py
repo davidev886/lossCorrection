@@ -47,7 +47,7 @@ phi_tilde = args.phi_tilde
 index_confs = 0
 rotation_ops = Rloss_all(phi_tilde * np.pi)
 for num_loss, loss_confs in binary_configurations().configurations.items():  
-    if num_loss > 5:
+
         final_prob = []
         result_correction = []
         num_losses = []

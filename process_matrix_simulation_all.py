@@ -182,7 +182,6 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
         prob_success = sum(result_correction[:,0] * result_correction[:,2])
         final_prob.append([phi_tilde, prob_success])
 
-np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%07d\t' + '%d\t' * 2)
-#np.savetxt("prova.dat", final_prob, fmt = '%1.10f' )
+np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
 np.savetxt(f"final_prob_{phi_tilde:1.3f}.dat", final_prob, fmt = '%1.10f' )
 print(final_prob)

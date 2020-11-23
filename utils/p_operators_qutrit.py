@@ -22,7 +22,7 @@ _sigmas_P =   [[[1,  0],  [0, 1]],
     
 #ancilla always the last qubit
 L = 7
-ancilla_num = 1
+
 
 Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
 
@@ -171,15 +171,10 @@ def orthonormal_basis_operator(T_matrix):
 def get_chi_from_choi(choi, T_matrix):
     return np.dot(T_matrix, np.dot(choi, T_matrix.conj().T))
 
-def apply_qnd_process_unit(choi, state_total, qu_data):
+def apply_qnd_process_unit(chi_matrix, state_total, qu_data, T_matrix):
 
     if state_total.type == "ket":
         state_total = state_total * state_total.dag()
-
-    T_matrix = give_transformation_matrix()
-    np.savetxt("T_matrix.dat", T_matrix, fmt="%1.4f")
-
-    chi_matrix = get_chi_from_choi(choi, T_matrix)
 
     on_basis_lambda = normalize_operators(_lambdas_GM)
     on_basis_Pauli = normalize_operators(_sigmas_P)

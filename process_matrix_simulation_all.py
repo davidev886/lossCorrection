@@ -10,13 +10,11 @@ now = datetime.datetime.now()
 final_data_name = now.strftime("%Y%m%d%H%M")
 
 import argparse
-#python process_matrix_simulation_all.py --phi_tilde 
+#python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND measurement qubit+7qutrit system")
 parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation angle")
+parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "Rotation angle")
 args = parser.parse_args()
-
-
-
 
 from utils.p_operators_qutrit import *
 
@@ -26,29 +24,25 @@ seme = randint(0,100)
 
 np.random.seed(seme)
 
-print("\nseed:", seme)
+print("seed:", seme)
 
 choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
-epsilon_choi = 0.0
+epsilon_choi = args.epsilon_choi
 choi = (1 - epsilon_choi) * choi_ideal + epsilon_choi * choi_experiment
 
-choi = choi_ideal 
-final_p_loss = []
-
 T_matrix = give_transformation_matrix()
-
 chi_matrix = get_chi_from_choi(choi, T_matrix)
     
 phi_tilde = args.phi_tilde
 
+final_p_loss = []
 index_confs = 0
 rotation_ops = Rloss_all(phi_tilde * np.pi)
 for num_loss, loss_confs in binary_configurations().configurations.items():  
 
-        final_prob = []
         result_correction = []
         num_losses = []
         for outcomes_ancilla in loss_confs:
@@ -84,9 +78,13 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
  
                 if projectors_ancilla[data_q] == +1:
                     prob_outcome = (rho_L * Pp_ancilla).tr()
+                    if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
+                    prob_outcome = abs(prob_outcome)
                     rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
                 elif  projectors_ancilla[data_q] == -1:
-                    prob_outcome = (rho_L * Pm_ancilla).tr()            
+                    prob_outcome = (rho_L * Pm_ancilla).tr()
+                    if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
+                    prob_outcome = abs(prob_outcome)                    
                     rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome                 
 
                 loss_pattern.append(outcomes_ancilla[data_q])
@@ -135,7 +133,10 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             stabZ_eigenvalues = []
             for meas in range(3):
                 #TO DO ADD a check on the imaginary part of prob_plus that should be VERY small
-                prob_plus =  abs((Pz[meas] * state_after_measure).tr())
+                prob_plus =  (Pz[meas] * state_after_measure).tr()
+                if abs(prob_plus.imag) > 1e-5: print("warning: im prob_plus = {prob_plus}")
+                prob_plus = abs(prob_plus)
+                
                 if prob_plus > 1: prob_plus = 1
                 if prob_plus < 0: prob_plus = 0    
 
@@ -149,7 +150,10 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
 
             stabX_eigenvalues = []
             for meas in range(3):
-                prob_plus =  abs((Px[meas] * state_after_measure).tr())
+                prob_plus =  (Px[meas] * state_after_measure).tr()
+                if abs(prob_plus.imag) > 1e-5: print("warning: im prob_plus = {prob_plus}")
+                prob_plus = abs(prob_plus)
+                
                 if prob_plus > 1: prob_plus = 1
                 if prob_plus < 0: prob_plus = 0    
                 result = 2 * np.random.binomial(1, prob_plus) - 1
@@ -179,9 +183,6 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
 
         result_correction = np.array(result_correction)
-        prob_success = sum(result_correction[:,0] * result_correction[:,2])
-        final_prob.append([phi_tilde, prob_success])
+
 
 np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
-np.savetxt(f"final_prob_{phi_tilde:1.3f}.dat", final_prob, fmt = '%1.10f' )
-print(final_prob)

@@ -180,9 +180,9 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
             final_p_loss.append([phi_tilde, conf_loss, int(correction_successful), num_loss, prob_total_event] + prob_single_loss)
             result_correction.append([int(correction_successful), num_loss, prob_total_event])
-            np.savetxt(final_data_name + f"_loss_process_matrix_exact_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
+            np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
 
         result_correction = np.array(result_correction)
 
 
-np.savetxt(final_data_name + f"_loss_process_matrix_exact_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
+np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))

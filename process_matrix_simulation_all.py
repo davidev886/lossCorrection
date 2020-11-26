@@ -21,7 +21,6 @@ from utils.p_operators_qutrit import *
 from random import randint
 seme = randint(0,100)
 
-
 np.random.seed(seme)
 
 print("seed:", seme)
@@ -31,7 +30,7 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 epsilon_choi = args.epsilon_choi
-choi = (1 - epsilon_choi) * choi_ideal + epsilon_choi * choi_experiment
+choi = (1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment
 
 T_matrix = give_transformation_matrix()
 chi_matrix = get_chi_from_choi(choi, T_matrix)
@@ -84,8 +83,8 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                 elif  projectors_ancilla[data_q] == -1:
                     prob_outcome = (rho_L * Pm_ancilla).tr()
                     if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
-                    prob_outcome = abs(prob_outcome)                    
-                    rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome                 
+                    prob_outcome = abs(prob_outcome)
+                    rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
 
                 loss_pattern.append(outcomes_ancilla[data_q])
                 prob_single_loss.append(prob_outcome)
@@ -106,18 +105,19 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                 np.savetxt(final_data_name + f"_loss_process_matrix_exact.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
                 break
 
-            w_0 = rho_L.ptrace(kept_qubits)
+            w_0 = rho_L.ptrace(kept_qubits)#.unit()
+            print("w_0.tr()", w_0.tr())
             rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
 
             permutation_order_q = {}
             for j, el in enumerate(losses + kept_qubits):
                 permutation_order_q[el] = j
-    #        print("permutation_order_q", permutation_order_q)            
+    #        print("permutation_order_q", permutation_order_q)
         
             stab_qubits_new_order = []
             for stab in stab_qubits:
                 stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
-                print(stab, [permutation_order_q[q] for q in stab])
+#                print(stab, [permutation_order_q[q] for q in stab])
 
             Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
             Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
@@ -126,7 +126,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             Pz = [(Id + el) / 2 for el in Sz]
 
             Pmx = [(Id - el) / 2 for el in Sx]
-            Pmz = [(Id - el) / 2 for el in Sz]  
+            Pmz = [(Id - el) / 2 for el in Sz]
         
             state_after_measure = rho_L
 
@@ -142,7 +142,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
 
                 result = 2 * np.random.binomial(1, prob_plus) - 1
                 stabZ_eigenvalues.append(result)
-    #            print(f"RESULT Z {meas} {prob_plus} {result}")    
+                print(f"RESULT Z {meas} {prob_plus} {result}")
                 if result == + 1:
                     state_after_measure =  Pz[meas] * state_after_measure * Pz[meas] / prob_plus
                 else:
@@ -158,7 +158,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                 if prob_plus < 0: prob_plus = 0    
                 result = 2 * np.random.binomial(1, prob_plus) - 1
                 stabX_eigenvalues.append(result)
-    #            print(f"RESULT X {meas} {prob_plus} {result}")      
+                print(f"RESULT X {meas} {prob_plus} {result}")
                 if result == +1:
                     state_after_measure =  Px[meas] * state_after_measure * Px[meas] / prob_plus
                 else:
@@ -170,19 +170,23 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             measured_Z = np.abs(qu.expect(ZL, state_after_measure))
             measured_X = np.abs(qu.expect(XL, state_after_measure))
 
-            correction_successful = ((np.abs(expected_Z - measured_Z) < 1e-7)
+            diffZ = np.abs(expected_Z - measured_Z) 
+            diffX = np.abs(expected_X - measured_X)
+
+            correction_successful = ((np.abs(expected_Z - measured_Z) < 1e-5)
                                         and 
-                                        (np.abs(expected_X - measured_X) < 1e-7))
+                                        (np.abs(expected_X - measured_X) < 1e-5))
+                                        
+            correction_successful = (1 - diffZ) * (1 - diffX)
 
             print("correction_successful:", correction_successful)
             print("qu.expect(ZL, state_after_measure)", stabZ_eigenvalues, f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
             print("qu.expect(XL, state_after_measure)", stabX_eigenvalues,f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
-            final_p_loss.append([phi_tilde, conf_loss, int(correction_successful), num_loss, prob_total_event] + prob_single_loss)
-            result_correction.append([int(correction_successful), num_loss, prob_total_event])
-            np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
-
-        result_correction = np.array(result_correction)
+            final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event] + prob_single_loss)
+            np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
 
 
-np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%d\t' * 2 + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
+
+
+np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))

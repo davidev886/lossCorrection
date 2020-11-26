@@ -30,6 +30,15 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 epsilon_choi = args.epsilon_choi
+
+import os
+folder_name = f'eps_{epsilon_choi:1.3f}'
+if not os.path.exists(folder_name):
+    os.makedirs(folder_name)
+
+
+file_data_name = os.path.join(folder_name, final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat")    
+
 choi = (1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment
 
 T_matrix = give_transformation_matrix()
@@ -184,9 +193,9 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             print("qu.expect(XL, state_after_measure)", stabX_eigenvalues,f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
             final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event] + prob_single_loss)
-            np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
+            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
 
 
 
 
-np.savetxt(final_data_name + f"_loss_procmat_exact_phi_{phi_tilde}_eps_{epsilon_choi}.dat", final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
+np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))

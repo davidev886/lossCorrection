@@ -16,6 +16,9 @@ parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation an
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "Rotation angle")
 args = parser.parse_args()
 
+phi_tilde = args.phi_tilde
+epsilon_choi = args.epsilon_choi
+
 from utils.p_operators_qutrit import *
 
 from random import randint
@@ -29,7 +32,7 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
-epsilon_choi = args.epsilon_choi
+
 
 import os
 folder_name = f'eps_{epsilon_choi:1.3f}'
@@ -44,7 +47,7 @@ choi = (1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment
 T_matrix = give_transformation_matrix()
 chi_matrix = get_chi_from_choi(choi, T_matrix)
     
-phi_tilde = args.phi_tilde
+
 
 final_p_loss = []
 index_confs = 0

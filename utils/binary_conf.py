@@ -1,7 +1,19 @@
 import numpy as np
 
 from itertools import product
-    
+
+
+class binary_raw_configurations(object):
+    def __init__(self, n = 6):
+        self.n = n
+        configurations = []
+        for i in range(2**n):
+            configuration_str = bin(i)[2:].zfill(n)
+            configuration_int = [int(_) for _ in configuration_str]
+            configurations.append(configuration_int)
+        self.configurations = configurations    
+
+
 class binary_configurations(object):
     def __init__(self, n = 7):
         self.n = n

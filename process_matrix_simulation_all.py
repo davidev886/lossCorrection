@@ -187,7 +187,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                                         and 
                                         (np.abs(expected_X - measured_X) < 1e-5))
                                         
-            correction_successful = (1 - diffZ) * (1 - diffX)
+            correction_successful = 1 - diffZ * diffX
 
             print("correction_successful:", correction_successful)
             print("qu.expect(ZL, state_after_measure)", stabZ_eigenvalues, f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )

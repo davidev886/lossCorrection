@@ -108,127 +108,131 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
         print(kept_qubits)
         if sum(outcomes_ancilla) >= 5:
             # loop over the 2^(3+3) stabilizers errors
-            for stab_errors_binary0 in stab_errors_list:
-                correction_successful = 0.0
-                stab_errors_binary = np.array(stab_errors_binary0)
+            for stab_errors_binary0_x, stab_errors_binary0_z in product(stab_errors_list, stab_errors_list):
+                stabX_errors = np.array(stab_errors_binary0_x)
+                stabZ_errors = np.array(stab_errors_binary0_z)
 
-                prob_stab_event = np.prod(p_err_stab**stab_errors_binary * (1 - p_err_stab)**(1 - stab_errors_binary ))
+                prob_stab_event_X = np.prod(p_err_stab**stabX_errors * (1 - p_err_stab)**(1 - stabX_errors ))
+                prob_stab_event_Z = np.prod(p_err_stab**stabZ_errors * (1 - p_err_stab)**(1 - stabZ_errors ))
+                prob_stab_event =   prob_stab_event_X * prob_stab_event_Z   
+                        
+                correction_successful = 0.0
 
                 print("qu.expect(ZL, state_after_measure)", f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
                 print("qu.expect(XL, state_after_measure)", f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
-                conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
-                conf_stab_error = int("".join(str(_) for _ in stab_errors_binary)) 
+                conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+                conf_stab_error = int("".join(str(_) for _ in stab_errors_binary0_x + stab_errors_binary0_z))
                 print("correction_successful:", correction_successful, f"{conf_loss:07d}", f"{conf_stab_error:06d}")
                 final_p_loss.append([phi_tilde, conf_loss, conf_stab_error, correction_successful, num_loss, prob_total_event, prob_stab_event] + prob_single_loss)
                 np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))
-            break                
-
-
-        w_0 = rho_L.ptrace(kept_qubits)#.unit()
-        print("w_0.tr()", w_0.tr())
-        rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
-
-        permutation_order_q = {}
-        for j, el in enumerate(losses + kept_qubits):
-            permutation_order_q[el] = j
-
-    
-        stab_qubits_new_order = []
-        for stab in stab_qubits:
-            stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
-#                print(stab, [permutation_order_q[q] for q in stab])
-
-        Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
-        Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
         
-        Px = [(Id + el) / 2 for el in Sx]
-        Pz = [(Id + el) / 2 for el in Sz]
+        elif sum(outcomes_ancilla) <= 4:
 
-        Pmx = [(Id - el) / 2 for el in Sx]
-        Pmz = [(Id - el) / 2 for el in Sz]
+            w_0 = rho_L.ptrace(kept_qubits)#.unit()
+            print("w_0.tr()", w_0.tr())
+            rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
+
+            permutation_order_q = {}
+            for j, el in enumerate(losses + kept_qubits):
+                permutation_order_q[el] = j
+
     
-        state_after_measure = rho_L
+            stab_qubits_new_order = []
+            for stab in stab_qubits:
+                stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
+    #                print(stab, [permutation_order_q[q] for q in stab])
 
-        stabZ_eigenvalues = []
-        for meas in range(3):
-            #TO DO ADD a check on the imaginary part of prob_plus that should be VERY small
-            prob_plus =  (Pz[meas] * state_after_measure).tr()
-            if abs(prob_plus.imag) > 1e-5: print("warning: im prob_plus = {prob_plus}")
-            prob_plus = abs(prob_plus)
+            Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+            Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+        
+            Px = [(Id + el) / 2 for el in Sx]
+            Pz = [(Id + el) / 2 for el in Sz]
+
+            Pmx = [(Id - el) / 2 for el in Sx]
+            Pmz = [(Id - el) / 2 for el in Sz]
+    
+            state_after_measure = rho_L
+
+            stabZ_eigenvalues = []
+            for meas in range(3):
+                #TO DO ADD a check on the imaginary part of prob_plus that should be VERY small
+                prob_plus =  (Pz[meas] * state_after_measure).tr()
+                if abs(prob_plus.imag) > 1e-5: print("warning: im prob_plus = {prob_plus}")
+                prob_plus = abs(prob_plus)
             
-            if prob_plus > 1: prob_plus = 1
-            if prob_plus < 0: prob_plus = 0
+                if prob_plus > 1: prob_plus = 1
+                if prob_plus < 0: prob_plus = 0
 
-            result = 2 * np.random.binomial(1, prob_plus) - 1
-            stabZ_eigenvalues.append(result)
-            print(f"RESULT Z {meas} {prob_plus} {result}")
-            if result == + 1:
-                state_after_measure =  Pz[meas] * state_after_measure * Pz[meas] / prob_plus
-            else:
-                state_after_measure =  Pmz[meas] * state_after_measure * Pmz[meas] / (1 - prob_plus)
+                result = 2 * np.random.binomial(1, prob_plus) - 1
+                stabZ_eigenvalues.append(result)
+                print(f"RESULT Z {meas} {prob_plus} {result}")
+                if result == + 1:
+                    state_after_measure =  Pz[meas] * state_after_measure * Pz[meas] / prob_plus
+                else:
+                    state_after_measure =  Pmz[meas] * state_after_measure * Pmz[meas] / (1 - prob_plus)
 
-        stabX_eigenvalues = []
-        for meas in range(3):
-            prob_plus =  (Px[meas] * state_after_measure).tr()
-            if abs(prob_plus.imag) > 1e-5: print("warning: im prob_plus = {prob_plus}")
-            prob_plus = abs(prob_plus)
+            stabX_eigenvalues = []
+            for meas in range(3):
+                prob_plus =  (Px[meas] * state_after_measure).tr()
+                if abs(prob_plus.imag) > 1e-5: print("warning: im prob_plus = {prob_plus}")
+                prob_plus = abs(prob_plus)
             
-            if prob_plus > 1: prob_plus = 1
-            if prob_plus < 0: prob_plus = 0    
-            result = 2 * np.random.binomial(1, prob_plus) - 1
-            stabX_eigenvalues.append(result)
-            print(f"RESULT X {meas} {prob_plus} {result}")
-            if result == +1:
-                state_after_measure =  Px[meas] * state_after_measure * Px[meas] / prob_plus
-            else:
-                state_after_measure = Pmx[meas] * state_after_measure * Pmx[meas] / (1 - prob_plus)
+                if prob_plus > 1: prob_plus = 1
+                if prob_plus < 0: prob_plus = 0    
+                result = 2 * np.random.binomial(1, prob_plus) - 1
+                stabX_eigenvalues.append(result)
+                print(f"RESULT X {meas} {prob_plus} {result}")
+                if result == +1:
+                    state_after_measure =  Px[meas] * state_after_measure * Px[meas] / prob_plus
+                else:
+                    state_after_measure = Pmx[meas] * state_after_measure * Pmx[meas] / (1 - prob_plus)
                 
-        # loop over the 2^(3+3) stabilizers errors
-        for stab_errors_binary0_x, stab_errors_binary0_z in product(stab_errors_list, stab_errors_list):
-            stabX_errors = np.array(stab_errors_binary0_x)
-            stabZ_errors = np.array(stab_errors_binary0_z)
-            #check if a loss happens on a faulty stabilizer
-            #if so, the state is not correctable (as measuring a stabilizer on a lost qubit is impossible)
-            faulty_stabX_qubits = [el for j,el in enumerate(stab_qubits) if stabX_errors[j]]
-            faulty_stabZ_qubits = [el for j,el in enumerate(stab_qubits) if stabZ_errors[j]]
-            print("stab_errors", stabX_errors, stabZ_errors)
-            print(faulty_stabX_qubits, faulty_stabZ_qubits)
+            # loop over the 2^(3+3) stabilizers errors
+            for stab_errors_binary0_x, stab_errors_binary0_z in product(stab_errors_list, stab_errors_list):
+                stabX_errors = np.array(stab_errors_binary0_x)
+                stabZ_errors = np.array(stab_errors_binary0_z)
+                #check if a loss happens on a faulty stabilizer
+                #if so, the state is not correctable (as measuring a stabilizer on a lost qubit is impossible)
+                faulty_stabX_qubits = [el for j,el in enumerate(stab_qubits) if stabX_errors[j]]
+                faulty_stabZ_qubits = [el for j,el in enumerate(stab_qubits) if stabZ_errors[j]]
+                print("stab_errors", stabX_errors, stabZ_errors)
+                print(faulty_stabX_qubits, faulty_stabZ_qubits)
 
-            loss_on_faulty_stabX = any([any([(loss in stab) for loss in losses]) for stab in faulty_stabX_qubits])
-            loss_on_faulty_stabZ = any([any([(loss in stab) for loss in losses]) for stab in faulty_stabZ_qubits])
-            prob_stab_event_X = np.prod(p_err_stab**stabX_errors * (1 - p_err_stab)**(1 - stabX_errors ))
-            prob_stab_event_Z = np.prod(p_err_stab**stabZ_errors * (1 - p_err_stab)**(1 - stabZ_errors ))
-            prob_stab_event =   prob_stab_event_X * prob_stab_event_Z           
-            print("loss_on_faulty_stabX =", loss_on_faulty_stabX, "\tloss_on_faulty_stabZ =", loss_on_faulty_stabZ)
+                loss_on_faulty_stabX = any([any([(loss in stab) for loss in losses]) for stab in faulty_stabX_qubits])
+                loss_on_faulty_stabZ = any([any([(loss in stab) for loss in losses]) for stab in faulty_stabZ_qubits])
+                prob_stab_event_X = np.prod(p_err_stab**stabX_errors * (1 - p_err_stab)**(1 - stabX_errors ))
+                prob_stab_event_Z = np.prod(p_err_stab**stabZ_errors * (1 - p_err_stab)**(1 - stabZ_errors ))
+                prob_stab_event =   prob_stab_event_X * prob_stab_event_Z           
+                print("loss_on_faulty_stabX =", loss_on_faulty_stabX, "\tloss_on_faulty_stabZ =", loss_on_faulty_stabZ)
 
-            if loss_on_faulty_stabX or loss_on_faulty_stabZ: 
-                correction_successful = 0.0 
-            else: #now check is the logical operators have the same expectation values of the original state
-                expected_Z = np.abs(qu.expect(ZL, psiL))
-                expected_X = np.abs(qu.expect(XL, psiL))
+                if loss_on_faulty_stabX or loss_on_faulty_stabZ: 
+                    correction_successful = 0.0 
+                else: #now check is the logical operators have the same expectation values of the original state
+                    expected_Z = np.abs(qu.expect(ZL, psiL))
+                    expected_X = np.abs(qu.expect(XL, psiL))
 
-                measured_Z = np.abs(qu.expect(ZL, state_after_measure))
-                measured_X = np.abs(qu.expect(XL, state_after_measure))
+                    measured_Z = np.abs(qu.expect(ZL, state_after_measure))
+                    measured_X = np.abs(qu.expect(XL, state_after_measure))
 
-                diffZ = np.abs(expected_Z - measured_Z)
-                diffX = np.abs(expected_X - measured_X)
+                    diffZ = np.abs(expected_Z - measured_Z)
+                    diffX = np.abs(expected_X - measured_X)
 
-                correction_successful = ((np.abs(expected_Z - measured_Z) < 1e-5)
-                                            and 
-                                            (np.abs(expected_X - measured_X) < 1e-5))
+                    correction_successful = ((np.abs(expected_Z - measured_Z) < 1e-5)
+                                                and 
+                                                (np.abs(expected_X - measured_X) < 1e-5))
                                     
-                correction_successful = (1 - diffZ) * (1 - diffX)
+                    correction_successful = (1 - diffZ) * (1 - diffX)
 
 
 
-                print("qu.expect(ZL, state_after_measure)", f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
-                print("qu.expect(XL, state_after_measure)", f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
+                    print("qu.expect(ZL, state_after_measure)", f"{qu.expect(ZL, psiL):1.4}", f"{qu.expect(ZL, state_after_measure):1.4}" )
+                    print("qu.expect(XL, state_after_measure)", f"{qu.expect(XL, psiL):1.4}", f"{qu.expect(XL, state_after_measure):1.4}")
             
 
-            conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
-            conf_stab_error = int("".join(str(_) for _ in stab_errors_binary0_x + stab_errors_binary0_z))
-            print("correction_successful:", correction_successful, f"{conf_loss:07d}", f"{conf_stab_error:06d}")
-            final_p_loss.append([phi_tilde, conf_loss, conf_stab_error, correction_successful, num_loss, prob_total_event, prob_stab_event] + prob_single_loss)
-            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))
+                conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
+                conf_stab_error = int("".join(str(_) for _ in stab_errors_binary0_x + stab_errors_binary0_z))
+                print("correction_successful:", correction_successful, f"{conf_loss:07d}", f"{conf_stab_error:06d}")
+                final_p_loss.append([phi_tilde, conf_loss, conf_stab_error, correction_successful, num_loss, prob_total_event, prob_stab_event] + prob_single_loss)
+                np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))
     
 np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))

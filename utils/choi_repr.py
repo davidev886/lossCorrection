@@ -7,7 +7,7 @@
 
 import numpy as np
 import qutip as qu
-
+import sys
 from itertools import product
 from p_operators_qutrit import proj
 
@@ -25,8 +25,61 @@ def apply_choi(rho, choiState):
     finalState = qu.Qobj(inpt=finalState, dims=rho.dims)
     return finalState
 
-
+# for plotting experimental choi operators
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from matplotlib import colors
+    from itertools import product
+    base_S = [(x,y) for x,y in product(range(2), range(3))]
+    label_axis =[ "".join([str(_) for _ in bR])+ "," + "".join([str(_) for _ in bS]) for (bR, bS) in product(base_S, base_S) ]
+
+    choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
+
+    np.set_printoptions(precision=4, suppress=True, threshold=sys.maxsize)
+
+    ratio = np.abs(choi_experiment.imag)/np.abs(choi_experiment.real)
+    #compute and print ratio imaginary / real part 
+    for i,j in product(range(ratio.shape[0]), range(ratio.shape[1])) :
+        print(f"{i: 3d},{j: 3d}, {abs(choi_experiment.real[i,j]):1.2e},  {abs(choi_experiment.imag[i,j]):1.2e}, {ratio[i,j]:6.2f}")
+
+
+    for index, A in enumerate([choi_experiment.real, choi_experiment.imag, np.abs(choi_experiment.imag)/np.abs(choi_experiment.real) ]):
+        str_img = ["real", "imag", "ratio"][index]
+        fig, ax = plt.subplots()
+
+        img = ax.matshow(A, cmap='RdGy' ) #, interpolation='nearest', cmap=cmap, norm=norm)#, extent=[36,0,36,0])
+        if index < 2:
+            img.set_clim(vmin=-0.15, vmax=0.15)
+        fig.colorbar(img)
+
+        plt.title(f"choi experiment no loss {str_img}")
+        ax.set_yticks(range(len(label_axis)))#, minor = True)
+        ax.set_yticklabels(label_axis, fontsize = 8)#), minor = True)
+        ax.set_xticks(range(len(label_axis)), [])
+        ax.set_xticklabels([])
+
+        ax=plt.gca()
+        ax.set_xticks([x-0.5 for x in range(1,36)],minor=True )
+        ax.set_yticks([y-0.5 for y in range(1,36)],minor=True)
+
+        plt.grid(which="minor",ls="-",lw=0.2, color='w')
+        ax.tick_params(which='minor', length=0, color='w')
+        ax.yaxis.set_ticks_position('left')
+        ax.xaxis.set_ticks_position('top')
+
+        for j in range(6):
+            ax.axhline(y=6*j - 0.5,color='lightgrey', linewidth=1, linestyle='-')
+            ax.axvline(x=6*j - 0.5,color='lightgrey', linewidth=1, linestyle='-')
+        #ax.yaxis.grid(True, which='major')
+    #        plt.show()
+
+
+
+        plt.savefig(f"choi_exp_noloss_{str_img}.pdf", bbox_inches='tight')
+    
+
+# for plotting ideal choi operators
+if 0:
     dimHa = 2
     dimHq = 3
     dimTot = dimHa * dimHq
@@ -34,22 +87,56 @@ if __name__ == "__main__":
                             for ja,jq in product(range(dimHa), range(dimHq))])
               
     rhoGamma = GammaState * GammaState.dag()        
+    phi_tilde = 1 / 2 ## loss 50%
+#    phi_tilde = 3 / 4. ## loss 85%  
 
-    A0 = proj(1, 1, dimHq) + proj(0, 0, dimHq)
-    A1 = proj(2, 2, dimHq)
 
-    U = qu.tensor(qu.qeye(dimHa), A0) + qu.tensor(qu.sigmax(), A1)
+    for phi_tilde in [0.0, 1/2, 3/4]:
+        phi =  phi_tilde * np.pi
+        A0 = proj(1, 1, dimHq) + np.cos(phi/2) * proj(0, 0, dimHq) + np.sin(phi/2) * proj(0, 2, dimHq)
+        A1 =  - np.sin(phi/2) * proj(2, 0, dimHq) + np.cos(phi/2) * proj(2, 2, dimHq)
 
-    choiState = qu.tensor(qu.qeye(dimHa), qu.qeye(dimHq), U) * rhoGamma * qu.tensor(qu.qeye(dimHa), qu.qeye(dimHq), U.dag())
+        U = qu.tensor(qu.qeye(dimHa), A0) + qu.tensor(qu.sigmax(), A1)
 
-    stateQubit = (np.random.random() * qu.basis(dimHq, 0) + np.random.random() * qu.basis(dimHq, 1)).unit()
+        choiState = qu.tensor(qu.qeye(dimHa), qu.qeye(dimHq), U) * rhoGamma * qu.tensor(qu.qeye(dimHa), qu.qeye(dimHq), U.dag())
 
-    stateTry_ket = qu.tensor(qu.basis(dimHa, 0), stateQubit)
-    stateTry = stateTry_ket * stateTry_ket.dag()
+        import matplotlib.pyplot as plt
+        from matplotlib import colors
+        from itertools import product
 
-    finalState = apply_choi(stateTry, choiState)
+        base_S = [(x,y) for x,y in product(range(2), range(3))]
+        label_axis =[ "".join([str(_) for _ in bR])+ "," + "".join([str(_) for _ in bS]) for (bR, bS) in product(base_S, base_S) ]
+        CC = choiState.full() / 6
+        np.savetxt(f"choiFinal_ideal_{phi_tilde:1.2f}.dat", CC, delimiter=',')
 
-    print(finalState)
+        for A in [choiState.full().real / 6]: #, choiState.full().imag / 6] :   
+            fig, ax = plt.subplots()
 
-    print(apply_choi(stateTry_ket, choiState))
+            img = ax.matshow(A, cmap='RdGy' ) #, interpolation='nearest', cmap=cmap, norm=norm)#, extent=[36,0,36,0])
+            img.set_clim(vmin=-0.15, vmax=0.15)
+            fig.colorbar(img)
 
+            plt.title(f"$\phi={phi_tilde:1.2f}\pi$" + "  $p_\mathrm{loss}"+ f"={np.sin(phi_tilde*np.pi/2)**2:1.2f}$")
+            ax.set_yticks(range(len(label_axis)))#, minor = True)
+            ax.set_yticklabels(label_axis, fontsize = 8)#), minor = True)
+            ax.set_xticks(range(len(label_axis)), [])
+            ax.set_xticklabels([])
+
+            ax=plt.gca()
+            ax.set_xticks([x-0.5 for x in range(1,36)],minor=True )
+            ax.set_yticks([y-0.5 for y in range(1,36)],minor=True)
+
+            plt.grid(which="minor",ls="-",lw=0.2, color='w')
+            ax.tick_params(which='minor', length=0, color='w')
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_ticks_position('top')
+
+            for j in range(6):
+                ax.axhline(y=6*j - 0.5,color='lightgrey', linewidth=1, linestyle='-')
+                ax.axvline(x=6*j - 0.5,color='lightgrey', linewidth=1, linestyle='-')
+            #ax.yaxis.grid(True, which='major')
+    #        plt.show()
+    
+    
+    
+        plt.savefig(f"choiFinal_ideal_{phi_tilde}.pdf", bbox_inches='tight')

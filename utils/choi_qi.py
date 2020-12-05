@@ -5,7 +5,8 @@ from itertools import product
 import matplotlib.pyplot as plt
 from matplotlib import colors
 
-PLOT = False
+
+PLOT = True
 SAVEFILE = False
 
 
@@ -45,8 +46,8 @@ for phi_tilde in [0.0, 1/2, 3/4]:
     
     msGate = qu.tensor(qu.sigmax(), qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 0]])) + qu.tensor(qu.qeye(dimHa), proj(2, 2, 3)) 
     RxA = qu.tensor(qu.sigmax(), qu.qeye(dimHq)) # bit flip ancilla
-    RxQ = qu.tensor(qu.qeye(dimHa), qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 0]]) + qu.Qobj([[0, 0, 0], [0, 0, 0], [0, 0, 1]]))  # bit flip qutrit       
-
+    temp_Xq = proj(2, 2, dimHq) +  proj(1, 0, dimHq) +  proj(0, 1, dimHq)    # bit flip qutrit
+    RxQ = qu.tensor(qu.qeye(dimHa), temp_Xq)
     U = RxA * RxQ * msGate * Rloss
     
     choiState = qu.tensor(qu.qeye(dimHa), qu.qeye(dimHq), U) * rhoGamma * qu.tensor(qu.qeye(dimHa), qu.qeye(dimHq), U.dag())
@@ -59,7 +60,8 @@ for phi_tilde in [0.0, 1/2, 3/4]:
         fig, ax = plt.subplots()
 
         img = ax.matshow(A, cmap='RdGy' ) #, interpolation='nearest', cmap=cmap, norm=norm)#, extent=[36,0,36,0])
-        img.set_clim(vmin=-1/np.sqrt(6), vmax=1/np.sqrt(6))
+#        img.set_clim(vmin=-1/np.sqrt(6), vmax=1/np.sqrt(6))
+        img.set_clim(vmin=-1/6, vmax=1/6)        
         fig.colorbar(img)
 
         plt.title(f"$\phi={phi_tilde:1.2f}\pi$" + "  $p_\mathrm{loss}"+ f"={np.sin(phi_tilde*np.pi/2)**2:1.2f}$")
@@ -80,8 +82,8 @@ for phi_tilde in [0.0, 1/2, 3/4]:
         for j in range(6):
             ax.axhline(y=6*j - 0.5,color='lightgrey', linewidth=1, linestyle='-')
             ax.axvline(x=6*j - 0.5,color='lightgrey', linewidth=1, linestyle='-')
-#        plt.show()
-        plt.savefig(f"choiFinal_ideal_{phi_tilde}.pdf", bbox_inches='tight')
+        plt.show()
+#        plt.savefig(f"choiFinal_ideal_{phi_tilde}.pdf", bbox_inches='tight')
 
     if SAVEFILE:
         np.savetxt(f"choiFinal_ideal_{phi_tilde:1.2f}.dat", choiState, delimiter=',')   

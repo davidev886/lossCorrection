@@ -203,5 +203,4 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
 
     final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event])
     np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')
-    exit()
     

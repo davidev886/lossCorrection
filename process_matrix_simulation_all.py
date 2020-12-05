@@ -27,7 +27,7 @@ jLog = args.logical_state
 
 from random import randint
 seme = randint(0,100)
-seme = 94
+#seme = 94
 np.random.seed(seme)
 
 print("seed:", seme)

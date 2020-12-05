@@ -27,7 +27,7 @@ jLog = args.logical_state
 
 from random import randint
 seme = randint(0,100)
-#seme = 94
+#seme = 44
 np.random.seed(seme)
 
 print("seed:", seme)
@@ -46,7 +46,7 @@ if not os.path.exists(folder_name):
 
 
 
-choi = (1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment
+choi = np.real((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment)
 
 T_matrix = give_transformation_matrix()
 chi_matrix = get_chi_from_choi(choi, T_matrix)
@@ -66,8 +66,8 @@ LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde}_eps_{epsilon_choi}.dat")    
 
 
+print(f"logical state |{LogicalStates_str[jLog]}_L>")
 for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
-
     num_loss = sum(outcomes_ancilla)
 
     index_confs += 1
@@ -78,20 +78,25 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
 
     loss_pattern = []
 
-    print("outcomes_ancilla", num_loss, outcomes_ancilla)
+
     prob_single_loss = []
     prob_total_event = 1.0
     prob_correction_logical_state = []
     psiL = LogicalStates[jLog]
-    print(f"logical state |{LogicalStates_str[jLog]}_L>")
-    
 
-    for data_q in range(L):
+    
+    rho_L = psiL * psiL.dag()  
+    list_qubits = list(range(L))
+
+#    print("XL", qu.expect(XL, rho_L))
+#    print("ZL", qu.expect(ZL, rho_L))
+#    print("YL", qu.expect(1j * XL * ZL, rho_L))   
+        
+    print("outcomes_ancilla", num_loss, outcomes_ancilla)        
+    for data_q in list_qubits:
         #apply Rloss with an angle phi
-        rho_L = psiL * psiL.dag()    
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
         rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, T_matrix)
-
         if projectors_ancilla[data_q] == +1:
             prob_outcome = (rho_L * Pp_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
@@ -109,11 +114,12 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
         print(data_q, projectors_ancilla[data_q], outcomes_ancilla[data_q], prob_outcome)
         if projectors_ancilla[data_q] == -1:
             rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
-              
+
+ #   print(data_q, prob_outcome)        
     losses = np.where(loss_pattern)[0].tolist()
     kept_qubits = list(set(range(L)) - set(losses))
 
-    if sum(outcomes_ancilla) >= 5:
+    if sum(outcomes_ancilla) >= 7:
         correction_successful = 0.0
         prob_correction_logical_state.append(correction_successful)            
     else:
@@ -124,13 +130,12 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
         permutation_order_q = {}
         for j, el in enumerate(losses + kept_qubits):
             permutation_order_q[el] = j
-        print("permutation_order_q", permutation_order_q)
+#        print("permutation_order_q", permutation_order_q)
 
         stab_qubits_new_order = []
         for stab in stab_qubits:
             stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
-
-            print(stab, [permutation_order_q[q] for q in stab])
+#            print(stab, [permutation_order_q[q] for q in stab])
 
         Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
         Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
@@ -189,13 +194,12 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
         elif jLog in (4,5):
             correction_successful = (1 +  abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
 
-    prob_correction_logical_state.append(correction_successful)
-    print("prob_correction_logical_state:", prob_correction_logical_state)
+    print("prob_correction_logical_state:", correction_successful)
 
 
     conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
 
-    final_p_loss.append([phi_tilde, conf_loss, np.mean(prob_correction_logical_state), num_loss, prob_total_event])
+    final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event])
     np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t') # + '%1.10f\t' * len(prob_single_loss))
 
 

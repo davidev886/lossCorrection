@@ -68,7 +68,6 @@ file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalSt
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
 for outcomes_ancilla_ in  binary_raw_configurations(n=7).configurations:
-    outcomes_ancilla = [0, 0, 0, 0, 1, 1, 1]
     num_loss = sum(outcomes_ancilla)
 
     index_confs += 1

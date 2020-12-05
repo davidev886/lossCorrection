@@ -183,20 +183,28 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, T_matrix):
     final_state_list = []
 
     for alpha, beta in product(range(rows), range(cols)):   
-        a_GM = alpha % 9
-        a_Pauli = (alpha - a_GM) // 9
-    
-        OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[a_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[a_Pauli]]
-        OP_1 = qu.tensor(OP_temp)
 
-        b_GM = beta % 9
-        b_Pauli = (beta - b_GM) // 9
-
-        OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[b_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[b_Pauli]]
-        OP_2 = qu.tensor(OP_temp)
-
-        final_state_list.append(chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag())
+        if abs(chi_matrix[alpha, beta]) > 1e-3 and alpha >= beta:
         
+            a_GM = alpha % 9
+            a_Pauli = (alpha - a_GM) // 9
+        
+            OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[a_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[a_Pauli]]
+            OP_1 = qu.tensor(OP_temp)
+
+            b_GM = beta % 9
+            b_Pauli = (beta - b_GM) // 9
+
+            OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[b_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[b_Pauli]]
+            OP_2 = qu.tensor(OP_temp)
+
+#            final_state_list.append(chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag())            
+            if alpha > beta:
+                action = chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag()
+                final_state_list.append(action + action.dag())
+            elif alpha == beta:
+                final_state_list.append(chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag())
+
     final_state = sum(final_state_list)
     return final_state        
         

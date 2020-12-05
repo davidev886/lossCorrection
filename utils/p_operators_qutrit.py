@@ -28,9 +28,9 @@ Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
 
 x_qutrit = qu.Qobj([[0,1,0] , [1,0,0], [0,0,1]])
 
-y_qutrit = qu.Qobj([[0,-1j,0] , [1j,0,0], [0,0,1]])
+y_qutrit = qu.Qobj([[0,-1j,0] , [1j,0,0], [0,0,0]])
 
-z_qutrit = qu.Qobj([[1,0,0] , [0,-1,0], [0,0,1]])
+z_qutrit = qu.Qobj([[1,0,0] , [0,-1,0], [0,0,0]])
 
 temp = [[qu.qeye(3)] * j + [x_qutrit] + [qu.qeye(3)] * (L - j - 1) + [qu.qeye(2)] for j in range(L)]
 X = [qu.tensor(temp[j]) for j in range(L)]

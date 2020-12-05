@@ -67,7 +67,8 @@ file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalSt
 
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
-for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
+for outcomes_ancilla_ in  binary_raw_configurations(n=7).configurations:
+    outcomes_ancilla = [0, 0, 0, 0, 1, 1, 1]
     num_loss = sum(outcomes_ancilla)
 
     index_confs += 1
@@ -78,8 +79,6 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
 
     loss_pattern = []
 
-
-    prob_single_loss = []
     prob_total_event = 1.0
     prob_correction_logical_state = []
     psiL = LogicalStates[jLog]
@@ -91,35 +90,39 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
 #    print("XL", qu.expect(XL, rho_L))
 #    print("ZL", qu.expect(ZL, rho_L))
 #    print("YL", qu.expect(1j * XL * ZL, rho_L))   
-        
-    print("outcomes_ancilla", num_loss, outcomes_ancilla)        
+    null_state = False    
+    print("outcomes_ancilla", num_loss, outcomes_ancilla)     
     for data_q in list_qubits:
         #apply Rloss with an angle phi
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
         rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, T_matrix)
+
         if projectors_ancilla[data_q] == +1:
             prob_outcome = (rho_L * Pp_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
-            prob_outcome = abs(prob_outcome)
-            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
+            if prob_outcome == 0:
+                #the state cannot be projected in the +1 eigenstate of the ancilla
+                null_state = True
+            else:    
+                rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome)
         elif  projectors_ancilla[data_q] == -1:
             prob_outcome = (rho_L * Pm_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
-            prob_outcome = abs(prob_outcome)
-            rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
-
+            if prob_outcome == 0:
+                null_state = True
+            else:               
+                rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / abs(prob_outcome)
+                rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
         loss_pattern.append(outcomes_ancilla[data_q])
-        prob_single_loss.append(prob_outcome)
         prob_total_event *= prob_outcome
         print(data_q, projectors_ancilla[data_q], outcomes_ancilla[data_q], prob_outcome)
-        if projectors_ancilla[data_q] == -1:
-            rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
 
- #   print(data_q, prob_outcome)        
+  
     losses = np.where(loss_pattern)[0].tolist()
     kept_qubits = list(set(range(L)) - set(losses))
 
-    if sum(outcomes_ancilla) >= 7:
+    if sum(outcomes_ancilla) >= 7 or null_state:
+        print(prob_total_event)
         correction_successful = 0.0
         prob_correction_logical_state.append(correction_successful)            
     else:
@@ -200,9 +203,6 @@ for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
     conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
 
     final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event])
-    np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t') # + '%1.10f\t' * len(prob_single_loss))
-
-
-
-
-    #np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' + '%1.10f\t' * len(prob_single_loss))
+    np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')
+    exit()
+    

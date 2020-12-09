@@ -171,7 +171,7 @@ def orthonormal_basis_operator(T_matrix):
 def get_chi_from_choi(choi, T_matrix):
     return np.dot(T_matrix, np.dot(choi, T_matrix.conj().T))
 
-def apply_qnd_process_unit(chi_matrix, state_total, qu_data, T_matrix):
+def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
 
     if state_total.type == "ket":
         state_total = state_total * state_total.dag()
@@ -184,7 +184,7 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, T_matrix):
 
     for alpha, beta in product(range(rows), range(cols)):   
 
-        if abs(chi_matrix[alpha, beta]) > 1e-3 and alpha >= beta:
+        if abs(chi_matrix[alpha, beta]) > chi_threshold and alpha >= beta:
         
             a_GM = alpha % 9
             a_Pauli = (alpha - a_GM) // 9

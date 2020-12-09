@@ -17,12 +17,13 @@ parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND m
 parser.add_argument('--phi_tilde',  type=float, default=0.01, help = "Rotation angle")
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
+parser.add_argument('--chi_threshold',  type=float, default=1e-3, help = "threshold for discarding Kraus operators in the chi matrix")
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde
 epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
-
+chi_threshold = args.chi_threshold
 
 
 from random import randint
@@ -39,7 +40,7 @@ choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, de
 
 
 import os
-folder_name = f'eps_{epsilon_choi:1.3f}'
+folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
@@ -105,7 +106,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             #apply Rloss with an angle phi
             rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
             #apply the QND detection unit
-            rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, T_matrix)
+            rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)
 
             if projectors_ancilla[data_q] == +1:
                 prob_outcome = (rho_L * Pp_ancilla).tr()

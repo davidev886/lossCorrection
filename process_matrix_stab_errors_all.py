@@ -53,8 +53,7 @@ folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_stab_error_{p_e
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
-
-file_data_name = os.path.join(folder_name, final_data_name + f"_loss_procmat_stab_phi_{phi_tilde}_eps_{epsilon_choi}.dat")    
+file_data_name = os.path.join(folder_name, final_data_name + f"_stab_{p_err_stab}_state_{LogicalStates_str[jLog]}_phi_{phi_tilde}_eps_{epsilon_choi}.dat")    
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
 

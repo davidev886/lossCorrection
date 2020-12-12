@@ -251,6 +251,6 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                 conf_stab_error = int("".join(str(_) for _ in stab_errors_binary0_x + stab_errors_binary0_z))
                 print("correction_successful:", correction_successful, f"{conf_loss:07d}", f"{conf_stab_error:06d}")
                 final_p_loss.append([phi_tilde, conf_loss, conf_stab_error, correction_successful, num_loss, prob_total_event, prob_stab_event] + prob_single_loss)
-                np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))
+            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))
     
 np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%06d\t' + '%.10e\t' +'%d\t' + '%1.10f\t' * 2 + '%1.10f\t' * len(prob_single_loss))

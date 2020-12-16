@@ -37,17 +37,12 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
-
-
 import os
 folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
-
-
-
-choi = np.abs((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment)
+choi = np.real((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment)
 
 T_matrix = give_transformation_matrix()
 chi_matrix = get_chi_from_choi(choi, T_matrix)
@@ -101,7 +96,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
     #    print("YL", qu.expect(1j * XL * ZL, rho_L))   
         null_state = False    
         rho_L = psiL * psiL.dag()
-        print("outcomes_ancilla", num_loss, outcomes_ancilla)
+
         for data_q in list_qubits:
             #apply Rloss with an angle phi
             rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
@@ -128,7 +123,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             prob_total_event *= prob_outcome
             print(data_q, projectors_ancilla[data_q], outcomes_ancilla[data_q], prob_outcome)
 
-  
+
         losses = np.where(loss_pattern)[0].tolist()
         kept_qubits = list(set(range(L)) - set(losses))
 
@@ -139,7 +134,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
         else:
             w_0 = rho_L.ptrace(kept_qubits)
 
-            rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
+            rho_L = qu.tensor([qu.maximally_mixed_dm(3)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
 
             permutation_order_q = {}
             for j, el in enumerate(losses + kept_qubits):
@@ -215,4 +210,4 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
 
         final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event])
         np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')
-    
+        exit()

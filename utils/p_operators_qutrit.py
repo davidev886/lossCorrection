@@ -184,8 +184,8 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
 
     for alpha, beta in product(range(rows), range(cols)):   
 
-        if abs(chi_matrix[alpha, beta]) > chi_threshold and alpha >= beta:
-        
+#        if abs(chi_matrix[alpha, beta]) > chi_threshold and alpha >= beta:
+        if alpha >= beta:
             a_GM = alpha % 9
             a_Pauli = (alpha - a_GM) // 9
         
@@ -198,8 +198,7 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
             OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[b_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[b_Pauli]]
             OP_2 = qu.tensor(OP_temp)
 
-#            final_state_list.append(chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag())            
-            if alpha > beta:
+            if alpha > beta:        
                 action = chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag()
                 final_state_list.append(action + action.dag())
             elif alpha == beta:

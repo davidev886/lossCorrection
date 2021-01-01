@@ -38,9 +38,9 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 import os
-folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}'
-if not os.path.exists(folder_name):
-    os.makedirs(folder_name)
+folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_erasure'
+#if not os.path.exists(folder_name):
+#    os.makedirs(folder_name)
 
 choi = np.real((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment)
 

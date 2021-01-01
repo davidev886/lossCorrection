@@ -109,7 +109,35 @@ def Rloss(initial_state, phi, qu_data):
     
     return rot * initial_state * rot.dag()
     
+def Rloss_all_from_0(phi):
+    # return  a list with 7 Rloss gates one for each data qutrit
+    dimHq = 3 # Hilbert space data qutrit
+    
+    dimHa = 2 # Hilbert space ancilla qubit
+    
+    rloss = (proj(1, 1, dimHq) + np.cos(phi/2) * (proj(0, 0, dimHq) + proj(2 ,2, dimHq)) 
+                + np.sin(phi/2) * (proj(0, 2, dimHq) - proj(2, 0, dimHq)) )
+    
+    temp = [[qu.qeye(dimHq)] * j + [rloss] + [qu.qeye(dimHq)] * (L - j - 1) + [qu.qeye(dimHa)] for j in range(L)]
+    R_loss_list = [qu.tensor(temp[j]) for j in range(L)]    
+    
+    return R_loss_list
 
+
+def Rloss_all_from_1(phi):
+    # return  a list with 7 Rloss gates one for each data qutrit
+    dimHq = 3 # Hilbert space data qutrit
+    
+    dimHa = 2 # Hilbert space ancilla qubit
+    
+    rloss = (proj(0, 0, dimHq) + np.cos(phi/2) * (proj(1, 1, dimHq) + proj(2 ,2, dimHq)) 
+                + np.sin(phi/2) * (proj(1, 2, dimHq) - proj(2, 1, dimHq)) )
+    
+    temp = [[qu.qeye(dimHq)] * j + [rloss] + [qu.qeye(dimHq)] * (L - j - 1) + [qu.qeye(dimHa)] for j in range(L)]
+    R_loss_list = [qu.tensor(temp[j]) for j in range(L)]    
+    
+    return R_loss_list
+    
 
 def Rloss_all(phi):
     # return  a list with 7 Rloss gates one for each data qutrit

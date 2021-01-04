@@ -27,7 +27,14 @@ class binary_configurations(object):
             else:
                 configurations[num_particles]= [configuration_int]
         self.configurations = configurations
-    
+        
+        conf_temp = []
+        a = []
+        for j in range(n + 1):
+            conf_temp.extend(configurations[j])
+        self.configurations_list = conf_temp        
+        
+            
     def generate_configuration_loss_qnderror(self, num_l, num_q):
         configuration_loss = []
         configuration_qnd = []

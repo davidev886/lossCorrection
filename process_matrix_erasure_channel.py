@@ -146,7 +146,8 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
             else:               
                 rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / abs(prob_outcome)
                 rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
-            print(prob_outcome)                
+            print(prob_outcome / 2)                
+            prob_outcome  = prob_outcome / 2
 
         prob_total_event *= prob_outcome
     losses = np.where(np.logical_or(outcomes_ancilla_1, outcomes_ancilla_2))[0].tolist()  

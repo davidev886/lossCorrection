@@ -67,13 +67,17 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 
 measurements_two_ancillas =  product(binary_configurations().configurations_list, 
                                      binary_configurations().configurations_list)
+
 final_prob = []
 result_correction = []
 num_losses = []
 for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:  
+
     index_confs += 1
-
-
+    # if ancilla 1 is found in 1, do only the 0 case for ancilla 2
+    if (any(np.logical_and(outcomes_ancilla_1, outcomes_ancilla_2))):
+        continue
+        
     num_loss = sum(np.logical_or(outcomes_ancilla_1, outcomes_ancilla_2))
 
 
@@ -98,7 +102,6 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
 #    print("YL", qu.expect(1j * XL * ZL, rho_L))   
     null_state = False    
     rho_L = psiL * psiL.dag()
-
     for data_q in list_qubits:
         #apply Rloss with an angle phi from the state 0
         rho_L = rotation_ops_0[data_q] * rho_L * rotation_ops_0[data_q].dag()
@@ -146,8 +149,7 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
             else:               
                 rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / abs(prob_outcome)
                 rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
-            print(prob_outcome / 2)                
-            prob_outcome  = prob_outcome / 2
+            print(prob_outcome)
 
         prob_total_event *= prob_outcome
     losses = np.where(np.logical_or(outcomes_ancilla_1, outcomes_ancilla_2))[0].tolist()  

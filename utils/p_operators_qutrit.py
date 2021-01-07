@@ -26,7 +26,7 @@ L = 7
 
 Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
 
-x_qutrit = qu.Qobj([[0,1,0] , [1,0,0], [0,0,0]])
+x_qutrit = qu.Qobj([[0,1,0] , [1,0,0], [0,0,1]])
 
 y_qutrit = qu.Qobj([[0,-1j,0] , [1j,0,0], [0,0,0]])
 
@@ -109,53 +109,70 @@ def Rloss(initial_state, phi, qu_data):
     
     return rot * initial_state * rot.dag()
     
+def Rloss_1(initial_state, phi, qu_data):
+    if initial_state.type == "ket":
+        initial_state = initial_state * initial_state.dag()
+
+    dimHq = 3 # Hilbert space data qutrit
+
+    dimHa = 2 # Hilbert space ancilla qubit
+
+    rloss = (proj(0, 0, dimHq) + np.cos(phi/2) * (proj(1, 1, dimHq) + proj(2 ,2, dimHq)) 
+                + np.sin(phi/2) * (proj(1, 2, dimHq) - proj(2, 1, dimHq)))
+
+    rot_temp = [qu.qeye(dimHq)] * qu_data + [rloss] + [qu.qeye(dimHq)] * (L - qu_data - 1) + [qu.qeye(dimHa)]
+
+    rot = qu.tensor(rot_temp)
+
+    return rot * initial_state * rot.dag()
+
 def Rloss_all_from_0(phi):
     # return  a list with 7 Rloss gates one for each data qutrit
     dimHq = 3 # Hilbert space data qutrit
-    
+
     dimHa = 2 # Hilbert space ancilla qubit
-    
+
     rloss = (proj(1, 1, dimHq) + np.cos(phi/2) * (proj(0, 0, dimHq) + proj(2 ,2, dimHq)) 
                 + np.sin(phi/2) * (proj(0, 2, dimHq) - proj(2, 0, dimHq)) )
-    
+
     temp = [[qu.qeye(dimHq)] * j + [rloss] + [qu.qeye(dimHq)] * (L - j - 1) + [qu.qeye(dimHa)] for j in range(L)]
     R_loss_list = [qu.tensor(temp[j]) for j in range(L)]    
-    
+
     return R_loss_list
 
 
 def Rloss_all_from_1(phi):
     # return  a list with 7 Rloss gates one for each data qutrit
     dimHq = 3 # Hilbert space data qutrit
-    
+
     dimHa = 2 # Hilbert space ancilla qubit
-    
+
     rloss = (proj(0, 0, dimHq) + np.cos(phi/2) * (proj(1, 1, dimHq) + proj(2 ,2, dimHq)) 
                 + np.sin(phi/2) * (proj(1, 2, dimHq) - proj(2, 1, dimHq)) )
-    
+
     temp = [[qu.qeye(dimHq)] * j + [rloss] + [qu.qeye(dimHq)] * (L - j - 1) + [qu.qeye(dimHa)] for j in range(L)]
     R_loss_list = [qu.tensor(temp[j]) for j in range(L)]    
-    
+
     return R_loss_list
-    
+
 
 def Rloss_all(phi):
     # return  a list with 7 Rloss gates one for each data qutrit
     dimHq = 3 # Hilbert space data qutrit
-    
+
     dimHa = 2 # Hilbert space ancilla qubit
-    
+
     rloss = (proj(1, 1, dimHq) + np.cos(phi/2) * (proj(0, 0, dimHq) + proj(2 ,2, dimHq)) 
                 + np.sin(phi/2) * (proj(0, 2, dimHq) - proj(2, 0, dimHq)) )
-    
+
     temp = [[qu.qeye(dimHq)] * j + [rloss] + [qu.qeye(dimHq)] * (L - j - 1) + [qu.qeye(dimHa)] for j in range(L)]
     R_loss_list = [qu.tensor(temp[j]) for j in range(L)]    
-    
+
     return R_loss_list
 
 def normalize_operators(matrices_list):
     return [qu.Qobj(np.array(el) / LA.norm(el)) for el in matrices_list]
-             
+
 def give_transformation_matrix():
     basis_elements_list = []
     # the order of these for loops is important to define the T_matrix because the convention is
@@ -163,7 +180,7 @@ def give_transformation_matrix():
     for j in range(len(_sigmas_P)):    
         for i in range(len(_lambdas_GM)):
             _lambda = _lambdas_GM[i]
-            _sigma = _sigmas_P[j]            
+            _sigma = _sigmas_P[j]
             # we use the column vectorization convention. that's why we transpose the basis_element
             basis_operator = (qu.tensor(qu.Qobj(_sigma), qu.Qobj(_lambda))).full()
 
@@ -210,13 +227,11 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
     rows, cols = chi_matrix.shape
     final_state_list = []
 
-    for alpha, beta in product(range(rows), range(cols)):   
+    for alpha, beta in product(range(rows), range(cols)):
 
-#        if abs(chi_matrix[alpha, beta]) > chi_threshold and alpha >= beta:
-        if alpha >= beta:
             a_GM = alpha % 9
             a_Pauli = (alpha - a_GM) // 9
-        
+
             OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[a_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[a_Pauli]]
             OP_1 = qu.tensor(OP_temp)
 
@@ -226,26 +241,62 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
             OP_temp = [qu.qeye(3)] * qu_data + [on_basis_lambda[b_GM]] + [qu.qeye(3)] * (L - qu_data - 1) + [on_basis_Pauli[b_Pauli]]
             OP_2 = qu.tensor(OP_temp)
 
-            if alpha > beta:        
+            #partial_state = chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag()
+            #final_state_list.append(partial_state)
+
+            if alpha > beta:
                 action = chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag()
                 final_state_list.append(action + action.dag())
             elif alpha == beta:
                 final_state_list.append(chi_matrix[alpha, beta] * OP_1 * state_total * OP_2.dag())
-
     final_state = sum(final_state_list)
-    return final_state        
-        
-        
+    return final_state
+
+
 if __name__ == "__main__":
-#    on_basis_lambda = normalize_operators(_lambdas_GM)
-#    on_basis_Pauli = normalize_operators(_sigmas_P)
+    np.set_printoptions(precision = 4, suppress = True,  linewidth=100000) 
+    phi_tilde = 1 / 2
+    rotation_ops_0 = Rloss_all_from_0(phi_tilde * np.pi)
+
+    rotation_ops_1 = Rloss_all_from_1(phi_tilde * np.pi)
+
+    on_basis_lambda = normalize_operators(_lambdas_GM)
+    on_basis_Pauli = normalize_operators(_sigmas_P)
     choi_ideal = np.loadtxt("choiFinal_ideal.dat")
-    a = np.random.random()  + np.random.random() * 1j
-    b = np.random.random()  + np.random.random() * 1j
-    state_qutrit = qu.basis(3,0) # (a * qu.basis(3,0) + b * qu.basis(3,1)).unit()
-    initial_state = (qu.tensor([state_qutrit] + [qu.basis(3,0)] * (L - 1) + [qu.basis(2,0)])).unit()
-    final = Rloss(initial_state, np.pi / 2.0, qu_data = 0)
-#    final = apply_qnd_process_unit(choi_ideal, state_total, qu_data = 0)
-    np.savetxt("final.dat", final.full(), fmt="% 1.4f")
-    np.savetxt("initial.dat", initial_state * initial_state.dag().full(), fmt="% 1.4f")
-    
+
+    T_matrix = give_transformation_matrix()
+    chi_matrix = get_chi_from_choi(choi_ideal, T_matrix).round(15)
+    a = 1/np.sqrt(2)
+    b = 1/np.sqrt(2)
+#    a = 1
+#    b = 0
+    state_qutrit = (a * qu.basis(3,0) + b * qu.basis(3,1)).unit()
+
+    state_0 = (qu.tensor([state_qutrit, qu.basis(2,0)])).unit()
+    rho_L = state_0 * state_0.dag()
+    print(state_0)
+    rho_L = rotation_ops_0[0] * rho_L * rotation_ops_0[0].dag()
+
+    rho_L = apply_qnd_process_unit(chi_matrix, rho_L, 0, 0)
+
+    print("----")
+    print(rho_L)
+    print("----")
+
+    prob_outcome_1 = (rho_L * Pp_ancilla).tr()
+    print(prob_outcome_1)
+    rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome_1)
+    print(rho_L)
+    print("rotation from 1")
+    rho_L = rotation_ops_1[0] * rho_L * rotation_ops_1[0].dag()
+    rho_L = apply_qnd_process_unit(chi_matrix, rho_L, 0, 0)
+    print("apply second qnd")
+    print(rho_L)
+    prob_outcome_2 = (rho_L * Pp_ancilla).tr()
+    rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome_2)
+    print("project on 0 second time")
+    print(Pp_ancilla)
+    print(rho_L)
+
+
+    print(state_0 * state_0.dag())

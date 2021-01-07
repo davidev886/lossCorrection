@@ -14,10 +14,10 @@ final_data_name = now.strftime("%Y%m%d%H%M")
 import argparse
 #python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND measurement qubit+7qutrit system")
-parser.add_argument('--phi_tilde',  type=float, default=0.761, help = "Rotation angle")
+parser.add_argument('--phi_tilde',  type=float, default=0.05, help = "Rotation angle")
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
-parser.add_argument('--chi_threshold',  type=float, default=1e-3, help = "threshold for discarding Kraus operators in the chi matrix")
+parser.add_argument('--chi_threshold',  type=float, default=0, help = "threshold for discarding Kraus operators in the chi matrix")
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde
@@ -71,19 +71,13 @@ measurements_two_ancillas =  product(binary_configurations().configurations_list
 final_prob = []
 result_correction = []
 num_losses = []
-for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:  
-
+for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
     index_confs += 1
     # if ancilla 1 is found in 1, do only the 0 case for ancilla 2
     if (any(np.logical_and(outcomes_ancilla_1, outcomes_ancilla_2))):
         continue
-        
+
     num_loss = sum(np.logical_or(outcomes_ancilla_1, outcomes_ancilla_2))
-
-
-    projectors_ancilla_1 = 1 - 2*np.array(outcomes_ancilla_1)
-    projectors_ancilla_2 = 1 - 2*np.array(outcomes_ancilla_2) 
-
 
     phi = phi_tilde * np.pi 
 
@@ -93,13 +87,8 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
     prob_correction_logical_state = []
     psiL = LogicalStates[jLog]
 
-
-
     list_qubits = list(range(L))
-
-#    print("XL", qu.expect(XL, rho_L))
-#    print("ZL", qu.expect(ZL, rho_L))
-#    print("YL", qu.expect(1j * XL * ZL, rho_L))   
+  
     null_state = False    
     rho_L = psiL * psiL.dag()
     for data_q in list_qubits:
@@ -153,7 +142,7 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
 
         prob_total_event *= prob_outcome
     losses = np.where(np.logical_or(outcomes_ancilla_1, outcomes_ancilla_2))[0].tolist()  
-    print(data_q, projectors_ancilla_1[data_q], outcomes_ancilla_1, outcomes_ancilla_2, losses)
+    print(outcomes_ancilla_1, outcomes_ancilla_2, losses)
 
 
     kept_qubits = list(set(range(L)) - set(losses))
@@ -165,7 +154,7 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
     else:
         w_0 = rho_L.ptrace(kept_qubits)
 
-        rho_L = qu.tensor([qu.maximally_mixed_dm(3)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
+        rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses) + [w_0] + [qu.fock_dm(2,0)])
 
         permutation_order_q = {}
         for j, el in enumerate(losses + kept_qubits):
@@ -236,12 +225,11 @@ for outcomes_ancilla_1, outcomes_ancilla_2 in measurements_two_ancillas:
 
     print("prob_correction_logical_state:", correction_successful)
 
+    conf_loss_1 = int("".join(str(_) for _ in outcomes_ancilla_1))
+    conf_loss_2 = int("".join(str(_) for _ in outcomes_ancilla_2))
 
-    conf_loss = int("".join(str(_) for _ in 0+np.logical_or(outcomes_ancilla_1, outcomes_ancilla_2)))
+    final_p_loss.append([phi_tilde, conf_loss_1, conf_loss_2, correction_successful, num_loss, prob_total_event])
+    np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')        
 
 
-    final_p_loss.append([phi_tilde, conf_loss, correction_successful, num_loss, prob_total_event])
-    np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')
-
-
-np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')        
+np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.10f\t')        

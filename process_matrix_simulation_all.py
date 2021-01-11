@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
     
 import numpy as np
 import qutip as qu
+np.set_printoptions(precision=4)
 
 from utils.qnd_error_gen import pick_qnd_error
 from utils.binary_conf import binary_configurations, binary_raw_configurations
@@ -45,9 +46,7 @@ if not os.path.exists(folder_name):
 choi = np.real((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment)
 
 T_matrix = give_transformation_matrix()
-chi_matrix = get_chi_from_choi(choi, T_matrix)
-np.set_printoptions(precision=3) 
-
+chi_matrix = np.real(get_chi_from_choi(choi, T_matrix))
 
 final_p_loss = []
 index_confs = 0

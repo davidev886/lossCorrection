@@ -16,7 +16,7 @@ import argparse
 #python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND measurement qubit+7qutrit system")
 parser.add_argument('--phi_tilde',  type=float, default=0.01, help = "Rotation angle")
-parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
+parser.add_argument('--epsilon_choi',  type=float, default=0.9, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
 parser.add_argument('--chi_threshold',  type=float, default=1e-3, help = "threshold for discarding Kraus operators in the chi matrix")
 args = parser.parse_args()
@@ -47,6 +47,8 @@ choi = np.real((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experim
 
 T_matrix = give_transformation_matrix()
 chi_matrix = np.real(get_chi_from_choi(choi, T_matrix))
+
+chi_matrix[np.abs(chi_matrix) < 0.5e-3] = 0 
 
 final_p_loss = []
 index_confs = 0

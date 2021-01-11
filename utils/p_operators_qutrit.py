@@ -228,7 +228,7 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
     final_state_list = []
 
     for alpha, beta in product(range(rows), range(cols)):
-
+        if chi_matrix[alpha, beta]:
             a_GM = alpha % 9
             a_Pauli = (alpha - a_GM) // 9
 
@@ -253,8 +253,84 @@ def apply_qnd_process_unit(chi_matrix, state_total, qu_data, chi_threshold):
     return final_state
 
 
+def find_false_positive():
+
+    phi_tilde = 0
+    rotation_ops_0 = Rloss_all_from_0(phi_tilde * np.pi)
+
+    rotation_ops_1 = Rloss_all_from_1(phi_tilde * np.pi)
+
+    on_basis_lambda = normalize_operators(_lambdas_GM)
+    on_basis_Pauli = normalize_operators(_sigmas_P)
+    choi_ideal = np.loadtxt("choiFinal_ideal.dat")
+    choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
+ 
+    
+    T_matrix = give_transformation_matrix()
+    chi_matrix = get_chi_from_choi(6 * choi_experiment, T_matrix) #.round(15)
+    a = 1/np.sqrt(2)
+    b = 1/np.sqrt(2)
+    a = 1
+    b = 0
+    c = 0
+    
+    if 1:
+#    for a, b in [[1,0], [0,1], [1/np.sqrt(2), 1/np.sqrt(2)]]:
+        state_qutrit = (a * qu.basis(3,0) + b * qu.basis(3,1) + c * qu.basis(3,2)).unit()
+
+        state_0 = (qu.tensor([state_qutrit, qu.basis(2,0)])).unit()
+        rho_L = state_0 * state_0.dag()
+
+        rho_L = rotation_ops_0[0] * rho_L * rotation_ops_0[0].dag()
+        print(rho_L)
+        exit()
+        rho_L = apply_qnd_process_unit(chi_matrix, rho_L, 0, 0)
+
+        print(f"prob ancilla 0 {(rho_L * Pp_ancilla).tr()}")    
+        print(f"prob ancilla 1 {(rho_L * Pm_ancilla).tr()}")    
+        p_10 = (rho_L * Pp_ancilla).tr()
+        p_11 = (rho_L * Pm_ancilla).tr()        
+        print("--------")
+        rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / p_10
+        print(rho_L)
+        w_0 = rho_L.ptrace([0])
+        print(w_0)
+#         rho_L = apply_qnd_process_unit(chi_matrix, rho_L, 0, 0)
+#         print(f"prob ancilla 0 {(rho_L * Pm_ancilla).tr()}")    
+#         print(f"prob ancilla 1 {(rho_L * Pp_ancilla).tr()}") 
+#         p_20 = (rho_L * Pp_ancilla).tr()
+#         p_21 = (rho_L * Pm_ancilla).tr()
+#         print(p_10*p_20)
+#         print(p_11*p_21)        
+#         print()
+#         print(p_10*p_20 + p_11*p_21)
+    exit()
+    prob_outcome_1 = (rho_L * Pp_ancilla).tr()
+    print(prob_outcome_1)
+    rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome_1)
+    print(rho_L)
+    print("rotation from 1")
+    rho_L = rotation_ops_1[0] * rho_L * rotation_ops_1[0].dag()
+    rho_L = apply_qnd_process_unit(chi_matrix, rho_L, 0, 0)
+    print("apply second qnd")
+    print(rho_L)
+    prob_outcome_2 = (rho_L * Pp_ancilla).tr()
+    rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome_2)
+    print("project on 0 second time")
+    print(Pp_ancilla)
+    print(rho_L)
+
+
+    print(state_0 * state_0.dag())
+    
+
 if __name__ == "__main__":
-    np.set_printoptions(precision = 4, suppress = True,  linewidth=100000) 
+
+
+    np.set_printoptions(precision = 5, suppress = True,  linewidth=100000) 
+#     find_false_positive()
+#     exit()
+    
     phi_tilde = 1 / 2
     rotation_ops_0 = Rloss_all_from_0(phi_tilde * np.pi)
 
@@ -263,18 +339,23 @@ if __name__ == "__main__":
     on_basis_lambda = normalize_operators(_lambdas_GM)
     on_basis_Pauli = normalize_operators(_sigmas_P)
     choi_ideal = np.loadtxt("choiFinal_ideal.dat")
-
+    choi_experiment = 6*  np.real(np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=','))
+    
+    print(choi_experiment.round(3))
+    exit()
     T_matrix = give_transformation_matrix()
-    chi_matrix = get_chi_from_choi(choi_ideal, T_matrix).round(15)
+    chi_matrix = get_chi_from_choi(choi_experiment.round(4), T_matrix).round(15)
     a = 1/np.sqrt(2)
     b = 1/np.sqrt(2)
 #    a = 1
 #    b = 0
-    state_qutrit = (a * qu.basis(3,0) + b * qu.basis(3,1)).unit()
-
-    state_0 = (qu.tensor([state_qutrit, qu.basis(2,0)])).unit()
+#    state_qutrit = (a * qu.basis(3,0) + b * qu.basis(3,1)).unit()
+    
+#    state_0 = (qu.tensor([state_qutrit, qu.basis(2,0)])).unit()
+#    state_0 = (qu.tensor([ZeroL, qu.basis(2,0)])).unit()
+    state_0 = OneL
     rho_L = state_0 * state_0.dag()
-    print(state_0)
+    print(rho_L)
     rho_L = rotation_ops_0[0] * rho_L * rotation_ops_0[0].dag()
 
     rho_L = apply_qnd_process_unit(chi_matrix, rho_L, 0, 0)
@@ -295,8 +376,5 @@ if __name__ == "__main__":
     prob_outcome_2 = (rho_L * Pp_ancilla).tr()
     rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome_2)
     print("project on 0 second time")
-    print(Pp_ancilla)
     print(rho_L)
-
-
-    print(state_0 * state_0.dag())
+    print(rho_L == OneL * OneL.dag())

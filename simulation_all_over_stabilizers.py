@@ -45,7 +45,7 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 import os
-folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}'
+folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_over_stab'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
@@ -65,7 +65,7 @@ LogicalStates = [ZeroL, OneL, (ZeroL + OneL)/np.sqrt(2), (ZeroL - OneL)/np.sqrt(
 LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
 
-file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde}_eps_{epsilon_choi}.dat")    
+file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")    
 
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")

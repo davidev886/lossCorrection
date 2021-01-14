@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND m
 parser.add_argument('--phi_tilde',  type=float, default=0.05, help = "Rotation angle")
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
-parser.add_argument('--chi_threshold',  type=float, default=5e-3, help = "threshold for discarding Kraus operators in the chi matrix")
+parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde
@@ -38,8 +38,6 @@ seme = randint(0,100)
 #seme = 44
 np.random.seed(seme)
 
-print("seed:", seme)
-
 choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
@@ -49,7 +47,7 @@ folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_over_stab'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
-choi = (1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment
+choi = np.real((1 - epsilon_choi) * choi_ideal + 6 * epsilon_choi * choi_experiment)
 
 T_matrix = give_transformation_matrix()
 chi_matrix = get_chi_from_choi(choi, T_matrix)
@@ -66,7 +64,7 @@ LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
 
 file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")    
-
+file_data_name_meas_report = os.path.join(folder_name, "stab_" + final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
 
@@ -94,8 +92,6 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
         prob_correction_logical_state = []
         psiL = LogicalStates[jLog]
 
-    
-
         list_qubits = list(range(L))
 
     #    print("XL", qu.expect(XL, rho_L))
@@ -103,15 +99,13 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
     #    print("YL", qu.expect(1j * XL * ZL, rho_L))   
         null_state = False    
         rho_L = psiL * psiL.dag()
-        print(id(rho_L))
-        print(id(psiL))
+
         for data_q in list_qubits:
             #apply Rloss with an angle phi
             rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
-            
             #apply the QND detection unit
-            rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)
-
+            rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
+            rho_L.tidyup(atol = 1e-8)
             if projectors_ancilla[data_q] == +1:
                 prob_outcome = (rho_L * Pp_ancilla).tr()
                 if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
@@ -162,8 +156,10 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             
             
             average_value_each_stab_meas = []
-            for meas_binary_X,meas_binary_Z in product(range(8), range(8)):  
-                state_after_measure = qu.Qobj(rho_L[:], dims =rho_L.dims)
+            correction_each_measurement = []
+            report_on_stab_measurements = []
+            for meas_binary_X,meas_binary_Z in product(range(8), range(8)): 
+                state_after_measure = qu.Qobj(rho_L[:], dims = rho_L.dims)
                 configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
                 configuration_int_X = [int(_) for _ in configuration_str_X]
                 configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
@@ -194,12 +190,23 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                     correction_successful = (1 +  abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
     
                 average_value_each_stab_meas.append(np.prod(probability_each_measurement) * correction_successful)
-            
-
+                conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+                conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
+                
+                report_on_stab_measurements.append([phi_tilde, 
+                                                    conf_loss, 
+                                                    conf_stab_meas] + 
+                                                    probability_each_measurement + 
+                                                    [np.prod(probability_each_measurement),  
+                                                    correction_successful, 
+                                                    np.prod(probability_each_measurement) *  correction_successful
+                                                    ])
+            with open(file_data_name_meas_report, 'a') as file_rep_stab:
+                np.savetxt(file_rep_stab, report_on_stab_measurements, fmt= '%1.3f\t' + '%07d\t'+ '%06d\t'  + '%1.8f\t' * (len(probability_each_measurement) + 3))
             print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
 
-            final_p_loss.append([phi_tilde, conf_loss, np.sum(average_value_each_stab_meas), num_loss, prob_total_event])
-            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
+            final_p_loss.append([phi_tilde, conf_loss, np.sum(average_value_each_stab_meas), num_loss, prob_total_event] + probability_each_measurement + [correction_successful])
+            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t' + '%1.12f\t' * (len(probability_each_measurement) + 1))
 
-np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
+np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t' + '%1.12f\t' * (len(probability_each_measurement) + 1))

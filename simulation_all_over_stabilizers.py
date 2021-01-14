@@ -206,7 +206,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
 
-            final_p_loss.append([phi_tilde, conf_loss, np.sum(average_value_each_stab_meas), num_loss, prob_total_event] + probability_each_measurement + [correction_successful])
-            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t' + '%1.12f\t' * (len(probability_each_measurement) + 1))
+            final_p_loss.append([phi_tilde, conf_loss, np.sum(average_value_each_stab_meas), num_loss, prob_total_event])
+            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
 
-np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t' + '%1.12f\t' * (len(probability_each_measurement) + 1))
+np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')

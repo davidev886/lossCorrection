@@ -21,7 +21,7 @@ import time
 import argparse
 #python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND measurement qubit+7qutrit system")
-parser.add_argument('--phi_tilde',  type=float, default=0.05, help = "Rotation angle")
+parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation angle")
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
 parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
@@ -105,7 +105,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
             #apply the QND detection unit
             rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
-            rho_L.tidyup(atol = 1e-8)
+            rho_L.tidyup(atol = 1e-6)
             if projectors_ancilla[data_q] == +1:
                 prob_outcome = (rho_L * Pp_ancilla).tr()
                 if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")

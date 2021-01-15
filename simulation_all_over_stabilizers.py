@@ -197,16 +197,16 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                                                     conf_loss, 
                                                     conf_stab_meas] + 
                                                     probability_each_measurement + 
-                                                    [np.prod(probability_each_measurement),  
-                                                    correction_successful, 
-                                                    np.prod(probability_each_measurement) *  correction_successful
+                                                    [np.real(np.prod(probability_each_measurement)),
+                                                    np.real(correction_successful),
+                                                    np.real(np.prod(probability_each_measurement) *  correction_successful)
                                                     ])
             with open(file_data_name_meas_report, 'a') as file_rep_stab:
                 np.savetxt(file_rep_stab, report_on_stab_measurements, fmt= '%1.3f\t' + '%07d\t'+ '%06d\t'  + '%1.8f\t' * (len(probability_each_measurement) + 3))
             print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
 
-            final_p_loss.append([phi_tilde, conf_loss, np.sum(average_value_each_stab_meas), num_loss, prob_total_event])
+            final_p_loss.append([phi_tilde, conf_loss, np.real(np.sum(average_value_each_stab_meas)), num_loss, np.real(prob_total_event)])
             np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
 
 np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')

@@ -169,7 +169,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                     prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr() 
                     if np.abs(prob) > 0:
                         state_after_measure = PPx[stab_num][outcome_stab] * state_after_measure * PPx[stab_num][outcome_stab].dag() / prob
-                        probability_each_measurement.append(prob)                        
+                        probability_each_measurement.append(np.real(prob))
                     else:
                         probability_each_measurement.append(0)
 
@@ -177,7 +177,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                     prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr() 
                     if np.abs(prob) > 0:
                         state_after_measure = PPz[stab_num][outcome_stab] * state_after_measure * PPz[stab_num][outcome_stab].dag() / prob
-                        probability_each_measurement.append(prob)                        
+                        probability_each_measurement.append(np.real(prob))
                     else:
                         probability_each_measurement.append(0)
                 print(configuration_int_X, configuration_int_Z, np.prod(probability_each_measurement), qu.expect(XL, state_after_measure), qu.expect(ZL, state_after_measure), qu.expect(1j * XL * ZL, state_after_measure))                        

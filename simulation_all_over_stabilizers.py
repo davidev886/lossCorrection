@@ -167,7 +167,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
                 probability_each_measurement = []
                 for stab_num, outcome_stab in enumerate(configuration_int_X):
                     prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr() 
-                    if prob > 0:
+                    if np.abs(prob) > 0:
                         state_after_measure = PPx[stab_num][outcome_stab] * state_after_measure * PPx[stab_num][outcome_stab].dag() / prob
                         probability_each_measurement.append(prob)                        
                     else:
@@ -175,7 +175,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
 
                 for stab_num, outcome_stab in enumerate(configuration_int_Z):
                     prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr() 
-                    if prob > 0:
+                    if np.abs(prob) > 0:
                         state_after_measure = PPz[stab_num][outcome_stab] * state_after_measure * PPz[stab_num][outcome_stab].dag() / prob
                         probability_each_measurement.append(prob)                        
                     else:

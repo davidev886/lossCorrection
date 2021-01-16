@@ -105,7 +105,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
             #apply the QND detection unit
             rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
-            rho_L.tidyup(atol = 1e-6)
+            rho_L.tidyup(atol = 1e-8)
             if projectors_ancilla[data_q] == +1:
                 prob_outcome = (rho_L * Pp_ancilla).tr()
                 if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")

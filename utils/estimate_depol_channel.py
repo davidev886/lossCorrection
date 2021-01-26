@@ -69,7 +69,6 @@ if __name__ == "__main__":
     X_a = qu.sigmax()
     id_all = qu.tensor(qu.qeye(2), qu.qeye(3))
 
-
     QND_ideal = qu.tensor(id_a, A0) + qu.tensor(X_a, A1)
 
 #   QND_ideal = 
@@ -87,7 +86,10 @@ if __name__ == "__main__":
     
     for p_dep in list_prob:
         channel_dep = depolarization_channel(p_dep)
-#construct the choi matrix of the ideal QND followed by the depolarization channel        
+# construct the choi matrix of the ideal QND followed by the depolarizing channel       
+# choi_ideal_and_depol = sum |i_1 j_1, i_2 j_2> <i_1 j_1, i_2 j_2| x Dep(QND(|i_1 j_1, i_2 j_2> <i_1 j_1, i_2 j_2|))
+# i_1, i_2 qubit basis  j_1, j_2 qutrit basis
+
         choi_parts_ideal_depol = []        
         for i1, j1 in product(range(2), range(3)):
             for i2, j2 in product(range(2), range(3)):    
@@ -113,11 +115,12 @@ if __name__ == "__main__":
     plt.xlabel("depolarizing error p")
     plt.ylabel("cost function")    
     plt.title(f"depolarizing error p min = {distances_array[arg_min][0]:.3}")
-    ax = plt.gca()
+
     from matplotlib.ticker import AutoMinorLocator
+    ax = plt.gca()
     ax.xaxis.set_minor_locator(AutoMinorLocator())
     ax.yaxis.set_minor_locator(AutoMinorLocator())
-#    ax.tick_params(axis='x', which='minor', bottom=False)    
+
     plt.plot([distances_array[arg_min][0]], [distances_array[arg_min][1]], 'o')
-    plt.savefig("distances_p_depol.pdf")
+#    plt.savefig("distances_p_depol.pdf")
     plt.show()

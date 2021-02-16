@@ -43,7 +43,7 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 import os
-folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_over_stab'
+folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_depol_channel_p_{p_depolarizing_min:1.3f}'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 

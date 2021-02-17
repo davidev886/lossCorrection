@@ -54,7 +54,7 @@ def CorrelatedOverRotQubit(qutrit_n, p_corr):
     XX_operators_2 = [qu.qeye(dimHq)] * qutrit_n + [ket22bra] + [qu.qeye(dimHq)] * (L - qutrit_n - 1) + [qu.qeye(dimHa)]
 
     corr = np.cos(p_corr * np.pi / 2) * qu.tensor(Id) + \
-           np.sin(p_corr * np.pi / 2) * (qu.tensor(XX_operators_1) + qu.tensor(XX_operators_2))
+            1j * np.sin(p_corr * np.pi / 2) * (qu.tensor(XX_operators_1) + qu.tensor(XX_operators_2))
 
     return corr
     

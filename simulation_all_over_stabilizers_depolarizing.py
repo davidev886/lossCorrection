@@ -25,13 +25,14 @@ parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation an
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
 parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
+parser.add_argument('--p_dep',  type=float, default=0.08, help = "depolarizing probability")
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde
 epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
 chi_threshold = args.chi_threshold
-p_depolarizing_min = 0.08
+p_depolarizing_min = args.p_dep
 
 from random import randint
 seme = randint(0,100)

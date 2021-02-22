@@ -8,6 +8,7 @@ from utils.qnd_error_gen import pick_qnd_error
 from utils.binary_conf import binary_configurations, binary_raw_configurations
 from utils.p_operators_qutrit import *
 from utils.depolarizing_channel import *
+from utils.overrotation_channel import *
 import datetime
 now = datetime.datetime.now()
 final_data_name = now.strftime("%Y%m%d%H%M")
@@ -26,6 +27,8 @@ parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
 parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
 parser.add_argument('--p_dep',  type=float, default=0.08, help = "depolarizing probability")
+parser.add_argument('--p_overrot', type=float, default=0.136, help = "over rotation probability")
+
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde
@@ -33,6 +36,8 @@ epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
 chi_threshold = args.chi_threshold
 p_depolarizing_min = args.p_dep
+p_overrot = args.p_overrot
+
 
 from random import randint
 seme = randint(0,100)
@@ -63,6 +68,8 @@ LogicalStates = [ZeroL, OneL, (ZeroL + OneL)/np.sqrt(2), (ZeroL - OneL)/np.sqrt(
 
 LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
+if p_overrot:
+    OverRotationOperators = CorrelatedOverRotQubitAll(p_overrot)
 
 file_data_name = os.path.join(folder_name, final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")    
 file_data_name_meas_report = os.path.join(folder_name, "stab_" + final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")
@@ -108,7 +115,8 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
             rho_L.tidyup(atol = 1e-8)
             #apply the depolarizing channel
-            
+            if p_overrot:
+                rho_L = OverRotationOperators[data_q] * rho_L * OverRotationOperators[data_q].dag()
             rho_L = UnitaryQubitQutritQNDDepol(p_depolarizing_min, rho_L, data_q)
             if projectors_ancilla[data_q] == +1:
                 prob_outcome = (rho_L * Pp_ancilla).tr()

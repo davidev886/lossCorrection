@@ -107,7 +107,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
             #apply the QND detection unit
             rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
-            rho_L.tidyup(atol = 1e-8)
+#            rho_L.tidyup(atol = 1e-8)
             #apply the depolarizing channel
             
             rho_L = OverRotationOperators[data_q] * rho_L * OverRotationOperators[data_q].dag()
@@ -212,6 +212,7 @@ for num_loss, loss_confs in binary_configurations().configurations.items():
             conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
 
             final_p_loss.append([phi_tilde, conf_loss, np.real(np.sum(average_value_each_stab_meas)), num_loss, np.real(prob_total_event)])
+            print(final_p_loss)
             np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
 
 np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')

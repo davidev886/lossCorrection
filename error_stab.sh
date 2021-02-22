@@ -1,7 +1,7 @@
 #!/bin/bash
 export OMP_NUM_THREADS=1
     
-eps=0.
+eps=1.0
 chi=1.0e-3
 pstab=0.02
 #printf "chi_%.01e_eps_%1.3f_p_stab_%1.3f" $chi $eps $pstab

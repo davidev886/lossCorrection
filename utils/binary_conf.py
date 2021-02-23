@@ -2,7 +2,6 @@ import numpy as np
 
 from itertools import product
 
-
 class binary_raw_configurations(object):
     def __init__(self, n = 6):
         self.n = n
@@ -218,3 +217,33 @@ def check_correctable_state(random_losses, qnd_errors):
             to_check = False
 
     return [correctable, non_correctable, to_check]
+    
+
+def get_ancilla_outcomes_false_negatives(L):
+    all_binary_ordered_confs = []
+    for num_loss, loss_confs in binary_configurations().configurations.items():  
+        all_binary_ordered_confs.extend(loss_confs)
+
+    all_configurations = []
+    for outcomes_ancilla in all_binary_ordered_confs:
+    #    print("outcomes_ancilla", outcomes_ancilla)
+        false_negative_confs = []
+        for false_neg_events_all in all_binary_ordered_confs:
+            false_neg_events = [0] * L
+            for _ in range (L):
+                if outcomes_ancilla[_] == 0:
+                    false_neg_events[_] = false_neg_events_all[_]
+                else:
+                    false_neg_events[_] = 0
+
+            if false_neg_events not in false_negative_confs:
+                false_negative_confs.append(false_neg_events)
+                
+            all_configurations.append([outcomes_ancilla, false_negative_confs])
+                
+    return all_configurations
+
+if __name__ == "__main__":
+    for _ in get_ancilla_outcomes_false_negatives(7):
+        print(_)
+        exit()

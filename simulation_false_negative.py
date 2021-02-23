@@ -5,7 +5,10 @@ import qutip as qu
 np.set_printoptions(precision=4, suppress=True)
 
 from utils.qnd_error_gen import pick_qnd_error
-from utils.binary_conf import binary_configurations, binary_raw_configurations
+from utils.binary_conf import (binary_configurations,
+                               binary_raw_configurations, 
+                               get_ancilla_outcomes_false_negatives)
+
 from utils.p_operators_qutrit import *
 from utils.overrotation_channel import *
 import datetime
@@ -16,19 +19,16 @@ from sys import getsizeof
 
 import time
 
-
-
 import argparse
 #python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 parser = argparse.ArgumentParser(description = "Simulate qubit losses with QND measurement qubit+7qutrit system")
-parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation angle")
-parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
-parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
-parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
-parser.add_argument('--dir_name',  type=str, help = "directory for saving data")
-parser.add_argument('--p_overrot', type=float, default=0.136, help = "over rotation probability")
-parser.add_argument('--falseneg', type=float, default=0.05, help = "false negative rate")
-
+parser.add_argument('--phi_tilde',  type=float, default=0.0, help="Rotation angle")
+parser.add_argument('--epsilon_choi',  type=float, default=0.0, help="epsilon_choi")
+parser.add_argument('--logical_state',  type=int, default=0, help="logical state integer corresponding to: 0, 1, +, -, +i, -i")
+parser.add_argument('--chi_threshold',  type=float, default=0.0, help="threshold for discarding Kraus operators in the chi matrix")
+parser.add_argument('--dir_name',  type=str, help="directory for saving data")
+parser.add_argument('--p_overrot', type=float, default=0.136, help="over rotation probability")
+parser.add_argument('--falseneg', type=float, default=0.05, help="false negative rate")
 
 args = parser.parse_args()
 
@@ -70,165 +70,173 @@ LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
 OverRotationOperators = CorrelatedOverRotQubitAll(p_overrot)
 
-for trial in range(100):
-    file_data_name = os.path.join(folder_name, final_data_name 
-                    + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}_trial_{trial:05d}.dat")    
-#    file_data_name_meas_report = os.path.join(folder_name, "stab_" + final_data_name + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")
+configurations = get_ancilla_outcomes_false_negatives(7)
 
-    print(f"logical state |{LogicalStates_str[jLog]}_L>")
+file_data_name = os.path.join(folder_name, final_data_name 
+                    + f"_state_{LogicalStates_str[jLog]}_phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat")    
 
-    for num_loss, loss_confs in binary_configurations().configurations.items():  
-         for outcomes_ancilla in loss_confs:
-                false_neg_events_all = np.random.binomial(1, falseneg, L)
-                false_neg_events = [0] * L
-                for _ in range (L):
-                    if outcomes_ancilla[_] == 0:
-                        false_neg_events[_] = false_neg_events_all[_]
-                    else:
-                        false_neg_events[_] = 0
-                print("outcomes_ancilla", outcomes_ancilla)
-                print("false_neg_events_all", false_neg_events_all.tolist())
-                print("false_neg_events", false_neg_events)
+print(f"logical state |{LogicalStates_str[jLog]}_L>")
 
-                index_confs += 1
-                        
-                phi = phi_tilde * np.pi 
+for outcomes_ancilla, false_neg_events_all in configurations:
+    print(outcomes_ancilla)
+    index_confs += 1
             
-                loss_pattern = []
-                prob_total_event = 1.0
-                prob_correction_logical_state = []
-                psiL = LogicalStates[jLog]
+    phi = phi_tilde * np.pi 
+    
+    prob_total_event = 1.0
+    prob_correction_logical_state = []
+    psiL = LogicalStates[jLog]
 
-                list_qubits = list(range(L))
+    list_qubits = list(range(L))
 
-                null_state = False    
-                rho_L = psiL * psiL.dag()
+    null_state = False    
+    rho_L = psiL * psiL.dag()
 
-                for data_q in list_qubits:
-                    #apply Rloss with an angle phi
-                    rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
-                    #apply the QND detection unit
-                    rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
-        #            rho_L.tidyup(atol = 1e-8)
-                    #apply the over-rotation
-                    rho_L = OverRotationOperators[data_q] * rho_L * OverRotationOperators[data_q].dag()
+    for data_q in list_qubits:
+        #apply Rloss with an angle phi
+        rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
+        #apply the QND detection unit
+        rho_L = apply_qnd_process_unit(chi_matrix, rho_L, data_q, chi_threshold)         
+#            rho_L.tidyup(atol = 1e-8)
+        #apply the over-rotation
+        rho_L = OverRotationOperators[data_q] * rho_L * OverRotationOperators[data_q].dag()
 
-                    if outcomes_ancilla[data_q] == 0: #no loss detected
-                        prob_outcome = (rho_L * Pp_ancilla).tr()
-                        if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
-                        if prob_outcome == 0:
-                            #the state cannot be projected in the +1 eigenstate of the ancilla
-                            null_state = True
-                        else:
-                            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome)
-                    elif outcomes_ancilla[data_q] == 1: #loss detected
-                        prob_outcome = (rho_L * Pm_ancilla).tr()
-                        if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
-                        if prob_outcome == 0:
-                            null_state = True
-                        else:
-                            rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / abs(prob_outcome)
-                            rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
-                    loss_pattern.append(outcomes_ancilla[data_q])
-                    prob_total_event *= prob_outcome
-                    print(data_q, outcomes_ancilla[data_q], f"{prob_outcome:1.4f}")
+        if outcomes_ancilla[data_q] == 0: #no loss detected
+            prob_outcome = (rho_L * Pp_ancilla).tr()
+            if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
+            if prob_outcome == 0:
+                #the state cannot be projected in the +1 eigenstate of the ancilla
+                null_state = True
+            else:
+                rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / abs(prob_outcome)
+        elif outcomes_ancilla[data_q] == 1: #loss detected
+            prob_outcome = (rho_L * Pm_ancilla).tr()
+            if abs(prob_outcome.imag) > 1e-5: print("warning: im prob_outcome = {prob_outcome}")
+            if prob_outcome == 0:
+                null_state = True
+            else:
+                rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / abs(prob_outcome)
+                rho_L = Xa  * rho_L * Xa.dag() #reinitializing ancilla
 
-                losses = np.where(loss_pattern)[0].tolist()
-                false_negative_qubits = np.where(false_neg_events)[0].tolist()
-                kept_qubits = [_ for _ in range(L) 
-                                if (_ not in false_negative_qubits) 
-                                and (_ not in losses)]
+        prob_total_event *= prob_outcome
+        print(data_q, outcomes_ancilla[data_q], f"{prob_outcome:1.6f}")
 
-                if sum(outcomes_ancilla) >= 7 or null_state:
-                    print(prob_total_event)
-                    correction_successful = 0.0
-                    prob_correction_logical_state.append(correction_successful)
-                else:
-                    w_0 = rho_L.ptrace(kept_qubits)
-                    rho_L = qu.tensor([qu.fock_dm(3,0)] * len(losses)
-                                       + [qu.fock_dm(3,2)] * len(false_negative_qubits) 
-                                       + [w_0] 
-                                       + [qu.fock_dm(2,0)])
+    losses = np.where(outcomes_ancilla)[0].tolist()
+    
+    for false_neg_events in false_neg_events_all:
+        rho_L_1 = qu.Qobj(rho_L[:], dims = rho_L.dims)    
+        false_negative_qubits = np.where(false_neg_events)[0].tolist()
+        kept_qubits = [_ for _ in range(L) 
+                        if (_ not in false_negative_qubits) 
+                        and (_ not in losses)]
+        prob_fn_event = np.prod((falseneg)**(np.array(false_neg_events)) * 
+                                (1-falseneg)**(1 - np.array(false_neg_events)))
+        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        conf_fn = int("".join(str(_) for _ in false_neg_events))
 
-                    print(losses, false_negative_qubits, kept_qubits)
-                    permutation_order_q = {}
-                    #the order in the for is important because redefine the state as
-                    # ket(0) losses , ket(2) false negative, kept_qubits
-                    for j, el in enumerate(losses + false_negative_qubits + kept_qubits):
-                        permutation_order_q[el] = j
+        print(outcomes_ancilla, false_neg_events, f"{prob_total_event:1.4f}", f"{prob_fn_event:1.15f}")
+      
+        if sum(outcomes_ancilla) >= 7 or null_state:
+            print(prob_total_event)
+            correction_successful = 0.0
+            prob_correction_logical_state.append(correction_successful)
+        else:
+            w_0 = rho_L_1.ptrace(kept_qubits)
+            rho_L_1 = qu.tensor([qu.fock_dm(3,0)] * len(losses)
+                               + [qu.fock_dm(3,2)] * len(false_negative_qubits) 
+                               + [w_0] 
+                               + [qu.fock_dm(2,0)])
+
+            print(losses, false_negative_qubits, kept_qubits)
+            permutation_order_q = {}
+            # the order in the for is important because redefine the state as
+            # ket(0) losses , ket(2) false negative, kept_qubits
+            for j, el in enumerate(losses + false_negative_qubits + kept_qubits):
+                permutation_order_q[el] = j
     #                print("permutation_order_q", permutation_order_q)
 
-                    stab_qubits_new_order = []
-                    for stab in stab_qubits:
-                        stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
+            stab_qubits_new_order = []
+            for stab in stab_qubits:
+                stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
 
-                    Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
-                    Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+            Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+            Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+
+            PPx = [[(Id + el) / 2, (Id - el) / 2] for el in Sx]
+            PPz = [[(Id + el) / 2, (Id - el) / 2] for el in Sz]            
+
+            average_value_each_stab_meas = []
+            correction_each_measurement = []
+            index_stab_measurement = 0                
+            for meas_binary_X,meas_binary_Z in product(range(8), range(8)): 
+                state_after_measure = qu.Qobj(rho_L_1[:], dims = rho_L_1.dims)
+                configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
+                configuration_int_X = [int(_) for _ in configuration_str_X]
+                configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
+                configuration_int_Z = [int(_) for _ in configuration_str_Z]                
+                probability_each_measurement = []
+                for stab_num, outcome_stab in enumerate(configuration_int_X):
+                    prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr() 
+                    if np.abs(prob) > 0:
+                        state_after_measure = (PPx[stab_num][outcome_stab] * 
+                                                state_after_measure * 
+                                              PPx[stab_num][outcome_stab].dag() / prob)
+                        probability_each_measurement.append(np.real(prob))
+                    else:
+                        probability_each_measurement.append(0)
+
+                for stab_num, outcome_stab in enumerate(configuration_int_Z):
+                    prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr() 
+                    if np.abs(prob) > 0:
+                        state_after_measure = (PPz[stab_num][outcome_stab] * 
+                                               state_after_measure * 
+                                               PPz[stab_num][outcome_stab].dag() / prob)
+                        probability_each_measurement.append(np.real(prob))
+                    else:
+                        probability_each_measurement.append(0)
+
+                #place where we can apply corrections but we don't
+        
+                print(f"{index_stab_measurement: 4d}", configuration_int_X, configuration_int_Z, 
+                        f"{np.prod(probability_each_measurement):1.4f}",
+                        f"{qu.expect(XL, state_after_measure):+1.4f}",
+                        f"{ qu.expect(ZL, state_after_measure):+1.4f}", 
+                        f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
+                        )
+
+                if jLog in (0,1):
+                    correction_successful = (1 + abs(qu.expect(ZL, state_after_measure))) / 2
+                elif jLog in (2,3):
+                    correction_successful = (1 + abs(qu.expect(XL, state_after_measure))) / 2
+                elif jLog in (4,5):
+                    correction_successful = (1 + abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
+
+                average_value_each_stab_meas.append(np.prod(probability_each_measurement) * correction_successful)
+                conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+                conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
+                conf_fn = int("".join(str(_) for _ in false_neg_events))
+                index_stab_measurement += 1
             
-                    PPx = [[(Id + el) / 2, (Id - el) / 2] for el in Sx]
-                    PPz = [[(Id + el) / 2, (Id - el) / 2] for el in Sz]            
+            print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
+            conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+            res = ([phi_tilde, 
+                    conf_loss, 
+                    conf_fn, 
+                    np.real(np.sum(average_value_each_stab_meas)),
+                    np.real(prob_total_event), 
+                    prob_fn_event])
 
-                    average_value_each_stab_meas = []
-                    correction_each_measurement = []
-                    report_on_stab_measurements = []
-                    index_stab_measurement = 0                
-                    for meas_binary_X,meas_binary_Z in product(range(8), range(8)): 
-                        state_after_measure = qu.Qobj(rho_L[:], dims = rho_L.dims)
-                        configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
-                        configuration_int_X = [int(_) for _ in configuration_str_X]
-                        configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
-                        configuration_int_Z = [int(_) for _ in configuration_str_Z]                
-                        probability_each_measurement = []
-                        for stab_num, outcome_stab in enumerate(configuration_int_X):
-                            prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr() 
-                            if np.abs(prob) > 0:
-                                state_after_measure = PPx[stab_num][outcome_stab] * state_after_measure * PPx[stab_num][outcome_stab].dag() / prob
-                                probability_each_measurement.append(np.real(prob))
-                            else:
-                                probability_each_measurement.append(0)
+            final_p_loss.append(res) 
+            np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t'  + 
+                                                          '%07d\t'   + 
+                                                          '%07d\t'   +
+                                                          '%.10e\t'  + 
+                                                          '%1.14f\t' + 
+                                                          '%1.14f\t')
 
-                        for stab_num, outcome_stab in enumerate(configuration_int_Z):
-                            prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr() 
-                            if np.abs(prob) > 0:
-                                state_after_measure = PPz[stab_num][outcome_stab] * state_after_measure * PPz[stab_num][outcome_stab].dag() / prob
-                                probability_each_measurement.append(np.real(prob))
-                            else:
-                                probability_each_measurement.append(0)
-
-                        #place where we can apply corrections but we don't
-                    
-                        print(f"{index_stab_measurement: 4d}", configuration_int_X, configuration_int_Z, 
-                                f"{np.prod(probability_each_measurement):1.4f}",
-                                f"{qu.expect(XL, state_after_measure):+1.4f}",
-                                f"{ qu.expect(ZL, state_after_measure):+1.4f}", 
-                                f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
-                                )
-
-                        if jLog in (0,1):
-                            correction_successful = (1 + abs(qu.expect(ZL, state_after_measure))) / 2
-                        elif jLog in (2,3):
-                            correction_successful = (1 + abs(qu.expect(XL, state_after_measure))) / 2
-                        elif jLog in (4,5):
-                            correction_successful = (1 + abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
-    
-                        average_value_each_stab_meas.append(np.prod(probability_each_measurement) * correction_successful)
-                        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-                        conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
-                
-                        report_on_stab_measurements.append([phi_tilde, 
-                                                            conf_loss, 
-                                                            conf_stab_meas] + 
-                                                            probability_each_measurement + 
-                                                            [np.real(np.prod(probability_each_measurement)),
-                                                            np.real(correction_successful),
-                                                            np.real(np.prod(probability_each_measurement) *  correction_successful)
-                                                            ])
-                        index_stab_measurement += 1
-    #                with open(file_data_name_meas_report, 'a') as file_rep_stab:
-    #                    np.savetxt(file_rep_stab, report_on_stab_measurements, fmt= '%1.3f\t' + '%07d\t'+ '%06d\t'  + '%1.8f\t' * (len(probability_each_measurement) + 3))
-                    print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
-                    conf_loss = int("".join(str(_) for _ in outcomes_ancilla)) 
-                    final_p_loss.append([phi_tilde, conf_loss, np.real(np.sum(average_value_each_stab_meas)), len(losses), np.real(prob_total_event)])
-                    np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
-
-    np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t' + '%07d\t' + '%.10e\t' +'%d\t' + '%1.12f\t')
+np.savetxt(file_data_name, final_p_loss, fmt= '%1.3f\t'  + 
+                                              '%07d\t'   + 
+                                              '%07d\t'   +
+                                              '%.10e\t'  + 
+                                              '%1.14f\t' + 
+                                              '%1.14f\t')

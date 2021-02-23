@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-    
+from random import randint
 import numpy as np
 import qutip as qu
 np.set_printoptions(precision=4, suppress=True)
@@ -25,7 +25,7 @@ parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation an
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
 parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
-parser.add_argument('--dir_name',  type=str, default=None, help = "directory for saving data")
+parser.add_argument('--dir_name',  type=str, help = "directory for saving data")
 parser.add_argument('--p_overrot', type=float, default=0.136, help = "over rotation probability")
 parser.add_argument('--falseneg', type=float, default=0.05, help = "false negative rate")
 
@@ -38,10 +38,10 @@ jLog = args.logical_state
 chi_threshold = args.chi_threshold
 p_overrot = args.p_overrot
 falseneg = args.falseneg
+folder_name = args.dir_name
 
-from random import randint
 seme = randint(0,100)
-seme = 44
+#seme = 44
 np.random.seed(seme)
 
 choi_ideal = np.loadtxt("choiFinal_ideal.dat")
@@ -49,10 +49,6 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 import os
-if args.dir_name:
-    folder_name = args.dir_name
-else:
-    folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_overrot_p_{p_overrot:1.3f}'
 
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)

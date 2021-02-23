@@ -11,7 +11,7 @@ for state in 3
 do
 for c in 0.1
 do
-        python simulation_all_over_stabilizers.py \
+        python  simulation_false_negative.py \
          --logical_state ${state} \
          --phi_tilde ${c} \
          --epsilon_choi ${eps} \

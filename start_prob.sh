@@ -3,7 +3,7 @@ export OMP_NUM_THREADS=1
     
 eps=0.0
 chi=0.0
-folder=$(printf "zzz_chi_%.01e_eps_%1.3f" $chi $eps )
+folder=$(printf "chi_%.01e_eps_%1.3f" $chi $eps )
 mkdir -p  $folder
 wait
 

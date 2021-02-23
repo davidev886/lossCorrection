@@ -5,9 +5,14 @@ eps=0.0
 chi=0.0
 poverrot=0.136
 falseneg=0.05
+
+for falseneg in 0.010 0.015 0.020 0.025 0.030 0.035 0.040 0.045 0.050
+do
+
+
 folder=$(printf "chi_%.01e_eps_%1.3f_overrot_p_%1.3f_fn_%1.3f" $chi $eps $poverrot $falseneg)
 mkdir -p  ${folder}
-wait
+sleep 2
 
 for state in  2
 do
@@ -18,7 +23,8 @@ do
         --epsilon_choi ${eps} --chi_threshold ${chi} \
         --p_overrot ${poverrot} \
         --falseneg ${falseneg} \
-         --dir_name ${folder}
-#        2>&1 >& 0_log_${c}_${eps}_${state}.log &
+         --dir_name ${folder} \
+        2>&1 >& 0_log_${c}_${eps}_${state}_${falseneg}.log &
+done
 done
 done

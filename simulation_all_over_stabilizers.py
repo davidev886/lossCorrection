@@ -25,6 +25,7 @@ parser.add_argument('--phi_tilde',  type=float, default=0.0, help = "Rotation an
 parser.add_argument('--epsilon_choi',  type=float, default=0.0, help = "epsilon_choi")
 parser.add_argument('--logical_state',  type=int, default=0, help = "logical state integer corresponding to: 0, 1, +, -, +i, -i")
 parser.add_argument('--chi_threshold',  type=float, default=0.0, help = "threshold for discarding Kraus operators in the chi matrix")
+parser.add_argument('--dir_name',  type=str, default=None, help = "directory for saving data")
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde
@@ -43,7 +44,11 @@ choi_ideal = np.loadtxt("choiFinal_ideal.dat")
 choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv", dtype=complex, delimiter=',')
 
 import os
-folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_over_stab'
+if args.dir_name:
+    folder_name = args.dir_name
+else:
+    folder_name = f'chi_{chi_threshold:.01e}_eps_{epsilon_choi:1.3f}_over_stab'
+
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 

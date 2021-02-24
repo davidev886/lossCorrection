@@ -136,7 +136,7 @@ for outcomes_ancilla, false_neg_events_all in configurations:
 
         print(outcomes_ancilla, false_neg_events, f"{prob_total_event:1.4f}", f"{prob_fn_event:1.15f}")
       
-        if sum(outcomes_ancilla) >= 7 or null_state:
+        if sum(outcomes_ancilla) >= 7 or null_state or sum(false_neg_events) >= 7:
             print(prob_total_event)
             correction_successful = 0.0
             prob_correction_logical_state.append(correction_successful)

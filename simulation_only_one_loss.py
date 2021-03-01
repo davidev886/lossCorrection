@@ -78,8 +78,7 @@ file_data_name = os.path.join(folder_name,
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
 
-#for outcomes_ancilla in  binary_raw_configurations(n=7).configurations:
-for outcomes_ancilla, false_neg_events_all in configurations_one_loss:
+for outcomes_ancilla in configurations_one_loss:
     print(outcomes_ancilla)
     index_confs += 1
             

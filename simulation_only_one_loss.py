@@ -93,7 +93,10 @@ for outcomes_ancilla in configurations_one_loss:
     null_state = False    
     rho_L = psiL * psiL.dag()
 
-    for data_q in list_qubits:
+    losses = np.where(outcomes_ancilla)[0].tolist()
+    conf_loss = int("".join(str(_) for _ in outcomes_ancilla))    
+
+    for data_q in losses:
         #apply Rloss with an angle phi
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
         #apply the QND detection unit
@@ -120,8 +123,6 @@ for outcomes_ancilla in configurations_one_loss:
         prob_total_event *= prob_outcome
         print(data_q, outcomes_ancilla[data_q], f"{prob_outcome:1.6f}")
 
-    losses = np.where(outcomes_ancilla)[0].tolist()
-    conf_loss = int("".join(str(_) for _ in outcomes_ancilla))    
 
     kept_qubits = [_ for _ in range(L) if (_ not in losses)]  
     print(outcomes_ancilla, f"{prob_total_event:1.4f}")

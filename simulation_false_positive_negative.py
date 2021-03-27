@@ -35,19 +35,21 @@ parser.add_argument('--chi_threshold',
                     help="threshold for discarding Kraus"
                          "operators in the chi matrix"
                     )
-
 parser.add_argument('--dir_name',
                     type=str,
                     default="./",
-                    help="directory for saving data")
+                    help="directory for saving data"
+                    )
 parser.add_argument('--p_overrot_2',
                     type=float,
                     default=0.136,
-                    help="over rotation MS gate")
+                    help="over rotation MS gate"
+                    )
 parser.add_argument('--p_overrot_1',
                     type=float,
                     default=0.010,
-                    help="over rotation single-qubit gates")
+                    help="over rotation single-qubit gates"
+                    )
 args = parser.parse_args()
 
 phi_tilde = args.phi_tilde

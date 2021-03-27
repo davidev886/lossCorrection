@@ -253,13 +253,47 @@ def get_ancilla_outcomes_false_negatives(L):
     return all_configurations
 
 
+def get_ancilla_outcomes_false_positives(L):
+    all_binary_ordered_confs = []
+    for num_loss, loss_confs in binary_configurations().configurations.items():
+        all_binary_ordered_confs.extend(loss_confs)
+
+    all_configurations = []
+    index_outcomes_ancilla = 0
+    for outcomes_ancilla in all_binary_ordered_confs:
+
+        false_positive_confs = []
+        for false_pos_events_all in all_binary_ordered_confs:
+
+            false_pos_events = [0] * L
+            for _ in range(L):
+                if outcomes_ancilla[_] == 1:
+                    false_pos_events[_] = false_pos_events_all[_]
+                else:
+                    false_pos_events[_] = 0
+
+            losses = np.where(outcomes_ancilla)[0].tolist()
+            false_positive_qubits = np.where(false_pos_events)[0].tolist()
+            kept_qubits = [_ for _ in range(L)
+                           if (_ not in false_positive_qubits)
+                           and (_ not in losses)]
+
+            if false_pos_events not in false_positive_confs \
+                and sum(false_pos_events) < 7:
+               false_positive_confs.append(false_pos_events)
+
+        all_configurations.append([outcomes_ancilla, false_positive_confs])
+        index_outcomes_ancilla += 1
+    return all_configurations
+
+
+
 if __name__ == "__main__":
-    #     for _ in get_ancilla_outcomes_false_negatives(7):
-    #         print(_)
-    #         exit()
     cc = 0
     a = get_ancilla_outcomes_false_negatives(7)
     for ifd, [x, y] in enumerate(a):
-        print(ifd, x, "||", len(y))
+        print(ifd, x, "||")
+        for el in y:
+                print(el)
         cc += len(y)
     print(cc)

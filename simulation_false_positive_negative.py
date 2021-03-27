@@ -46,7 +46,7 @@ parser.add_argument('--p_overrot_2',
                     help="over rotation MS gate")
 parser.add_argument('--p_overrot_1',
                     type=float,
-                    default=0.10,
+                    default=0.010,
                     help="over rotation single-qubit gates")
 args = parser.parse_args()
 
@@ -54,8 +54,8 @@ phi_tilde = args.phi_tilde
 epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
 chi_threshold = args.chi_threshold
-eta = args.p_overrot_2
-eps = args.p_overrot_1
+eta = args.p_overrot_2 * np.pi
+eps = args.p_overrot_1 * np.pi
 folder_name = args.dir_name
 
 choi_ideal = np.loadtxt("choiFinal_ideal.dat")

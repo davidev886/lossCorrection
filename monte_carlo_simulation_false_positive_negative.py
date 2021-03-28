@@ -53,7 +53,7 @@ parser.add_argument('--p_overrot_1',
                     )
 parser.add_argument('--num_trials',
                     type=int,
-                    default=1000,
+                    default=10000,
                     help="Number of Monte Carlo samples"
                     )
 
@@ -218,7 +218,8 @@ for trial in range(num_trials):
 
     prob_total_event = np.prod(probs_outcome) * np.prod(probs_incoherent_process)
     cumulative_probability += prob_total_event
-
+    print("probs_outcome", np.array(probs_outcome))
+    print("probs_incoherent_process", np.array(probs_incoherent_process))
     print(index_conf, outcomes_ancilla, sub_case_ancilla,
           do_nothing,
           replace_qubits,
@@ -232,7 +233,7 @@ for trial in range(num_trials):
           )
     conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
 
-    if sum(outcomes_ancilla) >= 7 or null_state:
+    if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
         print(prob_total_event)
         correction_successful = 0.0
         prob_correction_logical_state.append(correction_successful)

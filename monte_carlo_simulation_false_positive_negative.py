@@ -58,7 +58,7 @@ parser.add_argument('--num_trials',
                     )
 
 args = parser.parse_args()
-
+print(args)
 phi_tilde = args.phi_tilde
 epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
@@ -122,17 +122,19 @@ cumulative_probability = 0
 
 for trial in range(num_trials):
     random_sample_ancilla = randrange(6**L)
-    random_sample_ancilla_str = np.base_repr(random_sample_ancilla,
+    random_sample_ancilla_str_0 = np.base_repr(random_sample_ancilla,
                                              base=6,
-                                             padding=L
                                              )
+    random_sample_ancilla_str = f"{random_sample_ancilla_str_0:>07s}"
     event = [basic_event_str[car] for car in random_sample_ancilla_str]
 
     index_conf += 1
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
+
     print(event)
     print(outcomes_ancilla)
+
     phi = phi_tilde * np.pi
 
     prob_correction_logical_state = []

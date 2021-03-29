@@ -3,7 +3,7 @@ import numpy as np
 
 import os
 from utils.p_operators_qutrit import *
-
+from utils.binary_conf import create_random_event
 import datetime
 import argparse
 
@@ -127,29 +127,16 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 index_conf = 0
 cumulative_probability = 0
 
-
-for trial in range(num_trials):
-    event = []
-    for j_qubit in range(7):
-        ancilla = np.random.binomial(n=1, p=prob_loss, size=1)
-
-        ancilla_0 = np.random.multinomial(n=1, size=1,
-                                          pvals=[basic_event_probs['0'],
-                                                 basic_event_probs['1'],
-                                                 basic_event_probs['2'],
-                                                 basic_event_probs['3']]
-                                          )[0]
-
-        ancilla_1 = np.random.multinomial(n=1, size=1,
-                                          pvals=[basic_event_probs['4'],
-                                                 basic_event_probs['5']]
-                                          )[0]
-        if ancilla:
-            event.append([ancilla[0], np.where(ancilla_1)[0][0]])
-        else:
-            event.append([ancilla[0], np.where(ancilla_0)[0][0]])
-
+done_events = []
+while len(done_events) < num_trials:
+    event, event_str = create_random_event(prob_loss, basic_event_probs)
+    if event_str in done_events:
+        continue
+    done_events.append(event_str)
+    print(index_conf, event_str)
     index_conf += 1
+    if index_conf == num_trials: break
+
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
 

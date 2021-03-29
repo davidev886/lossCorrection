@@ -163,7 +163,7 @@ for event in all_events:
                             / abs(prob_outcome))
                 rho_L = X[data_q] * rho_L * X[data_q].dag()
                 do_nothing.append(data_q)
-                probs_incoherent_process.append(eps**2 / 2)
+                probs_incoherent_process.append(eps**2 / 4)
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
             prob_outcome = (rho_L * Pm_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5:
@@ -189,7 +189,8 @@ for event in all_events:
 
     prob_total_event = np.prod(probs_outcome) * np.prod(probs_incoherent_process)
     cumulative_probability += prob_total_event
-
+    print("probs_outcome", np.array(probs_outcome))
+    print("probs_incoherent_process", np.array(probs_incoherent_process))
     print(index_conf, outcomes_ancilla, sub_case_ancilla,
           do_nothing,
           replace_qubits,

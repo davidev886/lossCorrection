@@ -198,7 +198,7 @@ while len(done_events) < num_trials:
                             / abs(prob_outcome))
                 rho_L = X[data_q] * rho_L * X[data_q].dag()
                 do_nothing.append(data_q)
-                probs_incoherent_process.append(eps**2 / 2)
+                probs_incoherent_process.append(eps**2 / 4)
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
             prob_outcome = (rho_L * Pm_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5:

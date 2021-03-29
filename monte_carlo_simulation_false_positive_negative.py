@@ -7,8 +7,6 @@ from utils.p_operators_qutrit import *
 import datetime
 import argparse
 
-from random import randrange
-
 np.set_printoptions(precision=4, suppress=True)
 
 # python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
@@ -58,8 +56,8 @@ parser.add_argument('--num_trials',
                     )
 
 args = parser.parse_args()
-print(args)
 phi_tilde = args.phi_tilde
+phi = phi_tilde * np.pi
 epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
 chi_threshold = args.chi_threshold
@@ -100,6 +98,16 @@ basic_event_str = {'0': (0, 0),
                    '5': (1, 1)
                    }
 
+basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
+                     '1': eta**2 / 4,
+                     '2': eps**2 / 4,
+                     '3': eps**2 / 2,
+                     '4': (1 - eps**2 / 4),
+                     '5': eps**2 / 4
+                     }
+
+prob_loss = np.sin(phi / 2)**2 / 2
+
 # all_events = product(basis_events, repeat=L)
 
 # trial_list = [randrange(6**7) for _ in range(num_trials)]
@@ -121,12 +129,25 @@ cumulative_probability = 0
 
 
 for trial in range(num_trials):
-    random_sample_ancilla = randrange(6**L)
-    random_sample_ancilla_str_0 = np.base_repr(random_sample_ancilla,
-                                             base=6,
-                                             )
-    random_sample_ancilla_str = f"{random_sample_ancilla_str_0:>07s}"
-    event = [basic_event_str[car] for car in random_sample_ancilla_str]
+    event = []
+    for j_qubit in range(7):
+        ancilla = np.random.binomial(n=1, p=prob_loss, size=1)
+
+        ancilla_0 = np.random.multinomial(n=1, size=1,
+                                          pvals=[basic_event_probs['0'],
+                                                 basic_event_probs['1'],
+                                                 basic_event_probs['2'],
+                                                 basic_event_probs['3']]
+                                          )[0]
+
+        ancilla_1 = np.random.multinomial(n=1, size=1,
+                                          pvals=[basic_event_probs['4'],
+                                                 basic_event_probs['5']]
+                                          )[0]
+        if ancilla:
+            event.append([ancilla[0], np.where(ancilla_1)[0][0]])
+        else:
+            event.append([ancilla[0], np.where(ancilla_0)[0][0]])
 
     index_conf += 1
     outcomes_ancilla = [el[0] for el in event]
@@ -134,8 +155,6 @@ for trial in range(num_trials):
 
     print(event)
     print(outcomes_ancilla)
-
-    phi = phi_tilde * np.pi
 
     prob_correction_logical_state = []
     psiL = LogicalStates[jLog]

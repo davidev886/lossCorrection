@@ -250,7 +250,6 @@ for trial in range(num_trials):
           f"{np.prod(probs_outcome)*np.prod(probs_incoherent_process):.4}",
           f"{cumulative_probability:.4}"
           )
-    conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
 
     if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
         print(prob_total_event)
@@ -343,14 +342,15 @@ for trial in range(num_trials):
             average_value_each_stab_meas.append(prob_stabilizers *
                                                 correction_successful
                                                 )
-            conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-            conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
+            # conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
             index_stab_measurement += 1
 
         print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
         conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        conf_case_ancilla = int("".join(str(_) for _ in sub_case_ancilla))
         res = ([phi_tilde,
                 conf_loss,
+                conf_case_ancilla,
                 np.real(np.sum(average_value_each_stab_meas)),
                 np.real(prob_total_event)
                 ])
@@ -358,10 +358,12 @@ for trial in range(num_trials):
         final_p_loss.append(res)
         np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
                                                      '%07d\t' +
+                                                     '%07d\t' +
                                                      '%.10e\t' +
                                                      '%1.14f\t')
 
 np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
+                                             '%07d\t' +
                                              '%07d\t' +
                                              '%.10e\t' +
                                              '%1.14f\t')

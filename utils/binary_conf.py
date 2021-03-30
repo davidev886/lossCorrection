@@ -279,12 +279,13 @@ def get_ancilla_outcomes_false_positives(L):
                            and (_ not in losses)]
 
             if false_pos_events not in false_positive_confs \
-                and sum(false_pos_events) < 7:
-               false_positive_confs.append(false_pos_events)
+                    and sum(false_pos_events) < 7:
+                false_positive_confs.append(false_pos_events)
 
         all_configurations.append([outcomes_ancilla, false_positive_confs])
         index_outcomes_ancilla += 1
     return all_configurations
+
 
 def create_random_event(prob_loss, basic_event_probs):
     id_event = []
@@ -314,14 +315,12 @@ def create_random_event(prob_loss, basic_event_probs):
 
     return event, event_str
 
-
-
 if __name__ == "__main__":
     cc = 0
     a = get_ancilla_outcomes_false_negatives(7)
     for ifd, [x, y] in enumerate(a):
         print(ifd, x, "||")
         for el in y:
-                print(el)
+            print(el)
         cc += len(y)
     print(cc)

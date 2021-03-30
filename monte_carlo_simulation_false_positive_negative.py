@@ -101,7 +101,7 @@ basic_event_str = {'0': (0, 0),
 basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
                      '1': eta**2 / 4,
                      '2': eps**2 / 4,
-                     '3': eps**2 / 2,
+                     '3': eps**2 / 4,
                      '4': (1 - eps**2 / 4),
                      '5': eps**2 / 4
                      }

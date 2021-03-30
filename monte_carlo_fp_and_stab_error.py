@@ -57,7 +57,7 @@ parser.add_argument('--num_trials',
 parser.add_argument('--p_err_stab',
                     type=float,
                     default=0.05,
-                    help = "error in stab measurements"
+                    help="error in stab measurements"
                     )
 
 args = parser.parse_args()
@@ -291,12 +291,12 @@ while len(done_events) < num_trials:
                 # is already close to 1
                 break
             state_after_measure = qu.Qobj(rho_L[:], dims = rho_L.dims)
-            configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
-            configuration_int_X = [int(_) for _ in configuration_str_X]
-            configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
-            configuration_int_Z = [int(_) for _ in configuration_str_Z]
+            conf_str_X = bin(meas_binary_X)[2:].zfill(3)
+            conf_int_X = [int(_) for _ in conf_str_X]
+            conf_str_Z = bin(meas_binary_Z)[2:].zfill(3)
+            conf_int_Z = [int(_) for _ in conf_str_Z]
             probability_each_measurement = []
-            for stab_num, outcome_stab in enumerate(configuration_int_X):
+            for stab_num, outcome_stab in enumerate(conf_int_X):
                 prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr()
                 if np.abs(prob) > 0:
                     state_after_measure = (PPx[stab_num][outcome_stab] *
@@ -306,7 +306,7 @@ while len(done_events) < num_trials:
                 else:
                     probability_each_measurement.append(0)
 
-            for stab_num, outcome_stab in enumerate(configuration_int_Z):
+            for stab_num, outcome_stab in enumerate(conf_int_Z):
                 prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr()
                 if np.abs(prob) > 0:
                     state_after_measure = (PPz[stab_num][outcome_stab] *
@@ -318,7 +318,9 @@ while len(done_events) < num_trials:
 
             # place where we can apply corrections but we don't
 
-            print(f"{index_stab_measurement: 4d}", configuration_int_X, configuration_int_Z,
+            print(f"{index_stab_measurement: 4d}",
+                  conf_int_X,
+                  conf_int_Z,
                   f"{np.prod(probability_each_measurement):1.4f}",
                   f"{qu.expect(XL, state_after_measure):+1.4f}",
                   f"{ qu.expect(ZL, state_after_measure):+1.4f}",
@@ -330,31 +332,46 @@ while len(done_events) < num_trials:
             successful_correction_total = []
             for error_in_stab_X, error_in_stab_Z in product(range(8), range(8)):
 
-                configuration_str_error_X = bin(error_in_stab_X)[2:].zfill(3)
-                configuration_int_error_X = [int(_) for _ in configuration_str_error_X]
-                configuration_str_error_Z = bin(error_in_stab_Z)[2:].zfill(3)
-                configuration_int_error_Z = [int(_) for _ in configuration_str_error_Z]
-#                    print(configuration_int_X, "->" , np.array(configuration_int_X) + np.array(configuration_int_error_X) )
-#                    print(configuration_int_Z, "->" , np.array(configuration_int_Z) + np.array(configuration_int_error_Z) )
+                conf_str_error_X = bin(error_in_stab_X)[2:].zfill(3)
+                conf_int_error_X = [int(_) for _ in conf_str_error_X]
+                conf_str_error_Z = bin(error_in_stab_Z)[2:].zfill(3)
+                conf_int_error_Z = [int(_) for _ in conf_str_error_Z]
 
-                stabX_errors = np.array(configuration_int_error_X)
-                stabZ_errors = np.array(configuration_int_error_Z)
-                #check if a loss happens on a faulty stabilizer
-                #if so, the state is not correctable (as measuring a stabilizer on a lost qubit is impossible)
-                faulty_stabX_qubits = [el for j,el in enumerate(stab_qubits) if stabX_errors[j]]
-                faulty_stabZ_qubits = [el for j,el in enumerate(stab_qubits) if stabZ_errors[j]]
-#                    print("stab_errors", stabX_errors, stabZ_errors)
-#                    print(faulty_stabX_qubits, faulty_stabZ_qubits)
+                stabX_errors = np.array(conf_int_error_X)
+                stabZ_errors = np.array(conf_int_error_Z)
+                # check if a loss happens on a faulty stabilizer
+                # if so, the state is not correctable
+                # (as measuring a stabilizer on a lost qubit is impossible)
+                faulty_stabX_qubits = [el for j,el in enumerate(stab_qubits)
+                                       if stabX_errors[j]
+                                       ]
+                faulty_stabZ_qubits = [el for j,el in enumerate(stab_qubits)
+                                       if stabZ_errors[j]
+                                       ]
+                # print("stab_errors", stabX_errors, stabZ_errors)
+                # print(faulty_stabX_qubits, faulty_stabZ_qubits)
 
-                loss_on_faulty_stabX = any([any([(loss in stab) for loss in losses]) for stab in faulty_stabX_qubits])
-                loss_on_faulty_stabZ = any([any([(loss in stab) for loss in losses]) for stab in faulty_stabZ_qubits])
-                prob_stab_event_X = np.prod(p_err_stab**stabX_errors * (1 - p_err_stab)**(1 - stabX_errors ))
-                prob_stab_event_Z = np.prod(p_err_stab**stabZ_errors * (1 - p_err_stab)**(1 - stabZ_errors ))
+                loss_on_faulty_stabX = any([any([(loss in stab)
+                                            for loss in losses])
+                                            for stab in faulty_stabX_qubits]
+                                            )
+                loss_on_faulty_stabZ = any([any([(loss in stab)
+                                            for loss in losses])
+                                            for stab in faulty_stabZ_qubits]
+                                            )
+                prob_stab_event_X = np.prod(p_err_stab**stabX_errors *
+                                            (1 - p_err_stab)**(1 - stabX_errors)
+                                            )
+                prob_stab_event_Z = np.prod(p_err_stab**stabZ_errors *
+                                            (1 - p_err_stab)**(1 - stabZ_errors)
+                                            )
                 prob_stab_error_event = prob_stab_event_X * prob_stab_event_Z
-#                    print("loss_on_faulty_stabX =", loss_on_faulty_stabX, "\tloss_on_faulty_stabZ =", loss_on_faulty_stabZ)
+
 
                 if loss_on_faulty_stabX or loss_on_faulty_stabZ:
-                   correction_successful = 0.0
+                    # print(faulty_stabX_qubits, [([(loss in stab) for loss in losses]) for stab in faulty_stabX_qubits])
+                    # print(faulty_stabZ_qubits, [([(loss in stab) for loss in losses]) for stab in faulty_stabZ_qubits])
+                    correction_successful = 0.0
                 else:
                     if jLog in (0, 1):
                         correction_successful = (1 + abs(qu.expect(ZL, state_after_measure))) / 2
@@ -362,14 +379,18 @@ while len(done_events) < num_trials:
                         correction_successful = (1 + abs(qu.expect(XL, state_after_measure))) / 2
                     elif jLog in (4, 5):
                         correction_successful = (1 + abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
+                conf_stab_errors = int("".join(str(_) for _ in conf_int_error_X + conf_int_error_Z))
+                conf_stab_meas = int("".join(str(_) for _ in conf_int_X + conf_int_Z))
+                # print("------------------>",
+                #      f"{prob_stabilizers:1.5f}",
+                #      f"{prob_stab_error_event:1.5f}",
+                #      f"{correction_successful:1.5f}",
+                #      f"{conf_stab_errors:06d}" )
 
-                conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
-                conf_stab_errors  = int("".join(str(_) for _ in configuration_int_error_X + configuration_int_error_Z))
-
-            average_value_each_stab_meas.append(prob_stabilizers *
-                                                prob_stab_error_event *
-                                                correction_successful
-                                                )
+                average_value_each_stab_meas.append(prob_stabilizers *
+                                                    prob_stab_error_event *
+                                                    correction_successful
+                                                    )
             index_stab += 1
 
         print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))

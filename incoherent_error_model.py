@@ -1,3 +1,8 @@
+#
+# Case 2: incoherent model for the overrotations
+#
+#
+
 import qutip as qu
 import numpy as np
 
@@ -51,7 +56,7 @@ parser.add_argument('--p_overrot_1',
                     )
 parser.add_argument('--num_trials',
                     type=int,
-                    default=10000,
+                    default=5000,
                     help="Number of Monte Carlo samples"
                     )
 

@@ -18,7 +18,7 @@ do
 for c in $(seq -f "%1.2f" 0.05 0.05 0.95)
 do
      echo $c
-     python monte_carlo_simulation_false_positive_negative.py \
+     python incoherent_error_model.py \
         --logical_state ${state}  \
         --phi_tilde ${c}  \
         --epsilon_choi ${eps} \

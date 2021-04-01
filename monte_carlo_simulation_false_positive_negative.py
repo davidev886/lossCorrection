@@ -128,7 +128,7 @@ index_conf = 0
 cumulative_probability = 0
 
 done_events = []
-while len(done_events) < num_trials:
+while len(done_events) <= num_trials:
     event, event_str = create_random_event(prob_loss, basic_event_probs)
     if event_str in done_events:
         continue

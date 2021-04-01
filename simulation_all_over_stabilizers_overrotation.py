@@ -257,7 +257,7 @@ for outcomes_ancilla in all_loss_events:
             prob_stabilizers = np.prod(probability_each_measurement)
             cumulative_probability_stabilizers += prob_stabilizers
             exp_x = np.real(qu.expect(XL, state_after_measure))
-            exp_z = np.real(qu.expect(XL, state_after_measure))
+            exp_z = np.real(qu.expect(ZL, state_after_measure))
             exp_y = 1j * exp_x * exp_z
             print(conf_int_X,
                   conf_int_Z,

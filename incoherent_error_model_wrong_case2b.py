@@ -1,3 +1,9 @@
+#
+# Case 2: Incoherent error model for overrotation
+# with false negative case 2b (in notes_qi_qec) wrong.
+# Keep for testing role of false negative
+#
+
 import qutip as qu
 import numpy as np
 

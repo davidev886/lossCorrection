@@ -1,3 +1,8 @@
+#
+# Case 1: Coherent errors (single and two qubit overrotation)
+# with no stabilizers measurement errors
+#
+
 import numpy as np
 import qutip as qu
 import os
@@ -11,7 +16,6 @@ import datetime
 import argparse
 
 np.set_printoptions(precision=4, suppress=True)
-
 
 # python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 parser = argparse.ArgumentParser(description="Simulate qubit losses"
@@ -275,8 +279,8 @@ for outcomes_ancilla in all_loss_events:
                 correction_successful = (1 + abs(exp_y)) / 2
 
             prob_correction_logical_state.append(prob_stabilizers *
-                                                correction_successful
-                                                )
+                                                 correction_successful
+                                                 )
             conf_stab_meas = int("".join(str(_)
                                  for _ in conf_int_X + conf_int_Z)
                                  )

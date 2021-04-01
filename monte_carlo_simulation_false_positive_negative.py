@@ -279,7 +279,7 @@ while len(done_events) <= num_trials:
         PPz = [[(Id + el) / 2, (Id - el) / 2] for el in Sz]
 
         average_value_each_stab_meas = []
-        correction_each_measurement = []
+
         index_stab_measurement = 0
 
         cumulative_probability_stabilizers = 0.0

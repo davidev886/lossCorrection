@@ -60,9 +60,9 @@ eta = args.p_overrot_2 * np.pi
 eps = args.p_overrot_1 * np.pi
 folder_name = args.dir_name
 
-choi_ideal = np.loadtxt("choiFinal_ideal.dat")
+choi_ideal = np.loadtxt("choi_op/choiFinal_ideal.dat")
 
-choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv",
+choi_experiment = np.genfromtxt("choi_op/qubitqutrit_choi_noloss.csv",
                                 dtype=complex,
                                 delimiter=','
                                 )

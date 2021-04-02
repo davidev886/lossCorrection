@@ -136,11 +136,12 @@ done_events = []
 while len(done_events) < num_trials:
     event, event_str = create_random_event(prob_loss, basic_event_probs)
     if event_str in done_events:
+        index_conf += 1
         continue
     done_events.append(event_str)
     print(index_conf, event_str)
-    index_conf += 1
-    if index_conf == num_trials: break
+    if index_conf == num_trials:
+        break
 
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
@@ -353,6 +354,7 @@ while len(done_events) < num_trials:
                                                      '%07d\t' +
                                                      '%.10e\t' +
                                                      '%1.14f\t')
+    index_conf += 1
 
 np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
                                              '%07d\t' +

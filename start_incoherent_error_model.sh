@@ -9,7 +9,7 @@ do
 for overrot2 in 0.136 0.4300697618
 do
 
-folder=$(printf "case_2/chi_incohe_%.01e_eps_%1.3f_p2_%1.3f_p1_%1.3f" $chi $eps ${overrot2} ${overrot1})
+folder=$(printf "case_2/chi_%.01e_eps_%1.3f_p2_%1.3f_p1_%1.3f" $chi $eps ${overrot2} ${overrot1})
 echo ${overrot1}, ${overrot2}, ${folder}
 mkdir -p  $folder
 i=0
@@ -23,12 +23,12 @@ do
         --phi_tilde ${c}  \
         --epsilon_choi ${eps} \
         --chi_threshold ${chi} \
-        --num_trials 400 \        
+        --num_trials 400 \
         --p_overrot_1 ${overrot1} \
         --p_overrot_2 ${overrot2} \
         --dir_name $folder \
         2>&1 >& 0_log_${c}_${eps}_${state}_${overrot2}_${overrot1}.log &
-    
+
          pids[${i}]=$!
          i=$((i+1))
 done
@@ -40,3 +40,4 @@ done
 
 done
 done
+

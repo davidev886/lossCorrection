@@ -1,3 +1,8 @@
+#
+# Case 2: incoherent model for the overrotations
+#
+#
+
 import qutip as qu
 import numpy as np
 
@@ -65,9 +70,9 @@ eta = args.p_overrot_2 * np.pi
 eps = args.p_overrot_1 * np.pi
 folder_name = args.dir_name
 num_trials = args.num_trials
-choi_ideal = np.loadtxt("choiFinal_ideal.dat")
+choi_ideal = np.loadtxt("choi_op/choiFinal_ideal.dat")
 
-choi_experiment = np.genfromtxt("qubitqutrit_choi_noloss.csv",
+choi_experiment = np.genfromtxt("choi_op/qubitqutrit_choi_noloss.csv",
                                 dtype=complex,
                                 delimiter=','
                                 )
@@ -128,16 +133,14 @@ index_conf = 0
 cumulative_probability = 0
 
 done_events = []
-while len(done_events) <= num_trials:
+while len(done_events) < num_trials:
     event, event_str = create_random_event(prob_loss, basic_event_probs)
     if event_str in done_events:
         continue
     done_events.append(event_str)
     print(index_conf, event_str)
     index_conf += 1
-    if (index_conf == num_trials or
-            (1 - cumulative_probability) < 1e-4):
-        break
+    if index_conf == num_trials: break
 
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
@@ -197,7 +200,7 @@ while len(done_events) <= num_trials:
                 probs_incoherent_process.append(eps**2 / 4)
             elif sub_case_ancilla[data_q] == 3:  # epsilon**2/4
                 rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
-                         / abs(prob_outcome))
+                            / abs(prob_outcome))
                 rho_L = X[data_q] * rho_L * X[data_q].dag()
                 do_nothing.append(data_q)
                 probs_incoherent_process.append(eps**2 / 4)
@@ -209,9 +212,9 @@ while len(done_events) <= num_trials:
                 null_state = True
                 print("check null state")
                 exit()
-            if sub_case_ancilla[data_q] == 0:   # 1 - eps**2 / 4
-                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
-                         abs(prob_outcome))
+            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4
+                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag()
+                        / abs(prob_outcome))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 replace_qubits.append(data_q)
                 probs_incoherent_process.append(1 - eps**2 / 4)
@@ -219,7 +222,7 @@ while len(done_events) <= num_trials:
                 rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
                         / (1-abs(prob_outcome)))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                false_negative.append(data_q)
+                do_nothing.append(data_q)
                 probs_incoherent_process.append(eps**2 / 4)
 
         probs_outcome.append(prob_outcome)
@@ -246,10 +249,10 @@ while len(done_events) <= num_trials:
         prob_correction_logical_state.append(correction_successful)
     else:
         w_0 = rho_L.ptrace(do_nothing)
-        rho_L = qu.tensor([qu.fock_dm(3, 0)] * len(replace_qubits) +
-                          [qu.fock_dm(3, 2)] * len(false_negative) +
-                          [w_0] +
-                          [qu.fock_dm(2, 0)])
+        rho_L = qu.tensor([qu.fock_dm(3,0)] * len(replace_qubits)
+                           + [qu.fock_dm(3,2)] * len(false_negative)
+                           + [w_0]
+                           + [qu.fock_dm(2,0)])
 
         print(replace_qubits,
               false_negative,
@@ -264,22 +267,16 @@ while len(done_events) <= num_trials:
 
         stab_qubits_new_order = []
         for stab in stab_qubits:
-            stab_qubits_new_order.append([permutation_order_q[q]
-                                         for q in stab]
-                                         )
+            stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
 
-        Sx = [X[j1] * X[j2] * X[j3] * X[j4]
-              for j1, j2, j3, j4 in stab_qubits_new_order
-              ]
-        Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4]
-              for j1, j2, j3, j4 in stab_qubits_new_order
-              ]
+        Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+        Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
 
         PPx = [[(Id + el) / 2, (Id - el) / 2] for el in Sx]
         PPz = [[(Id + el) / 2, (Id - el) / 2] for el in Sz]
 
         average_value_each_stab_meas = []
-
+        correction_each_measurement = []
         index_stab_measurement = 0
 
         cumulative_probability_stabilizers = 0.0
@@ -290,7 +287,7 @@ while len(done_events) <= num_trials:
                 # during the stabilizer measurement
                 # is already close to 1
                 break
-            state_after_measure = qu.Qobj(rho_L[:], dims=rho_L.dims)
+            state_after_measure = qu.Qobj(rho_L[:], dims = rho_L.dims)
             configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
             configuration_int_X = [int(_) for _ in configuration_str_X]
             configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
@@ -300,9 +297,8 @@ while len(done_events) <= num_trials:
                 prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr()
                 if np.abs(prob) > 0:
                     state_after_measure = (PPx[stab_num][outcome_stab] *
-                                           state_after_measure *
-                                           PPx[stab_num][outcome_stab].dag() / prob
-                                           )
+                                            state_after_measure *
+                                          PPx[stab_num][outcome_stab].dag() / prob)
                     probability_each_measurement.append(np.real(prob))
                 else:
                     probability_each_measurement.append(0)

@@ -1,0 +1,3 @@
+./monte_carlo_incoherent.sh   2>&1 >& total_log & 
+./overrotation_all_stab.sh  2>&1 >& total_log &
+

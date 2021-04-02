@@ -4,12 +4,12 @@ export OMP_NUM_THREADS=1
 eps=0
 chi=0
 
-for overrot1 in 0 0.01 0.03162277660
+for overrot1 in 0.01 0.03162277660
 do
-for overrot2 in 0 0.136 0.4300697618
+for overrot2 in 0.136 0.4300697618
 do
 
-folder=$(printf "chi_incohe_%.01e_eps_%1.3f_p2_%1.3f_p1_%1.3f" $chi $eps ${overrot2} ${overrot1})
+folder=$(printf "case_2/chi_incohe_%.01e_eps_%1.3f_p2_%1.3f_p1_%1.3f" $chi $eps ${overrot2} ${overrot1})
 echo ${overrot1}, ${overrot2}, ${folder}
 mkdir -p  $folder
 i=0
@@ -23,7 +23,7 @@ do
         --phi_tilde ${c}  \
         --epsilon_choi ${eps} \
         --chi_threshold ${chi} \
-        --num_trials 2000 \        
+        --num_trials 400 \        
         --p_overrot_1 ${overrot1} \
         --p_overrot_2 ${overrot2} \
         --dir_name $folder \

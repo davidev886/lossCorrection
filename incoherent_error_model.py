@@ -238,7 +238,7 @@ for out_ancilla in all_outcomes_ancilla:
         cumulative_probability += prob_total_event
         print("probs_outcome", np.array(probs_outcome))
         print("probs_incoherent_process", np.array(probs_incoherent_process))
-        print(index_conf, outcomes_ancilla, sub_case_ancilla,
+        print(j_conf, outcomes_ancilla, sub_case_ancilla,
               do_nothing,
               replace_qubits,
               false_negative,

@@ -287,6 +287,35 @@ def get_ancilla_outcomes_false_positives(L):
     return all_configurations
 
 
+def create_random_incoherent_event(ancilla_outcomes, basic_event_probs):
+    id_event = []
+    event = []
+    for j_qubit in range(7):
+        ancilla = ancilla_outcomes[j_qubit]
+
+        ancilla_0 = np.random.multinomial(n=1, size=1,
+                                          pvals=[basic_event_probs['0'],
+                                                 basic_event_probs['1'],
+                                                 basic_event_probs['2'],
+                                                 basic_event_probs['3']]
+                                          )[0]
+
+        ancilla_1 = np.random.multinomial(n=1, size=1,
+                                          pvals=[basic_event_probs['4'],
+                                                 basic_event_probs['5']]
+                                          )[0]
+        if ancilla:
+            event.append([ancilla, np.where(ancilla_1)[0][0]])
+            id_event.append(str(4 + np.where(ancilla_1)[0][0]))
+        else:
+            event.append([ancilla, np.where(ancilla_0)[0][0]])
+            id_event.append(str(np.where(ancilla_0)[0][0]))
+
+    event_str = "".join(id_event)
+
+    return event, event_str
+
+
 def create_random_event(prob_loss, basic_event_probs):
     id_event = []
     event = []

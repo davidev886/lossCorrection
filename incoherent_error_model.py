@@ -8,9 +8,7 @@ import numpy as np
 
 import os
 from utils.p_operators_qutrit import *
-from utils.binary_conf import (create_random_event,
-                               create_random_incoherent_event
-                               )
+from utils.binary_conf import create_random_event
 import datetime
 import argparse
 
@@ -58,7 +56,7 @@ parser.add_argument('--p_overrot_1',
                     )
 parser.add_argument('--num_trials',
                     type=int,
-                    default=20,
+                    default=5000,
                     help="Number of Monte Carlo samples"
                     )
 
@@ -115,8 +113,7 @@ basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
-basis_events = [0, 1]
-all_outcomes_ancilla = product(basis_events, repeat=L)
+# all_events = product(basis_events, repeat=L)
 
 # trial_list = [randrange(6**7) for _ in range(num_trials)]
 # print(trial_list)
@@ -132,233 +129,232 @@ file_data_name = os.path.join(folder_name,
 
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
 
-
+index_conf = 0
 cumulative_probability = 0
-j_conf = 0
-for out_ancilla in all_outcomes_ancilla:
-    j_conf +=1
-    done_events = []
-    index_trial = 0
-    while len(done_events) < num_trials:
-        event, event_str = create_random_incoherent_event(out_ancilla,
-                                                          basic_event_probs
-                                                          )
-        if event_str in done_events:
-            index_trial += 1
-            continue
-        done_events.append(event_str)
-        if index_trial == num_trials:
-            break
 
-        outcomes_ancilla = [el[0] for el in event]
-        sub_case_ancilla = [el[1] for el in event]
+done_events = []
+while len(done_events) < num_trials:
+    event, event_str = create_random_event(prob_loss, basic_event_probs)
+    if event_str in done_events:
+        index_conf += 1
+        continue
+    done_events.append(event_str)
+    print(index_conf, event_str)
+    if index_conf == num_trials:
+        break
 
+    outcomes_ancilla = [el[0] for el in event]
+    sub_case_ancilla = [el[1] for el in event]
 
+    print(event)
+    print(outcomes_ancilla)
 
-        prob_correction_logical_state = []
-        psiL = LogicalStates[jLog]
+    prob_correction_logical_state = []
+    psiL = LogicalStates[jLog]
 
-        null_state = False
-        rho_L = psiL * psiL.dag()
-        do_nothing = []
-        replace_qubits = []
-        false_negative = []
-        probs_outcome = []
-        probs_incoherent_process = []
-        for data_q in range(L):
-            # apply Rloss with an angle phi
-            rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
-            # apply the QND detection unit
-            rho_L = apply_qnd_process_unit(chi_matrix,
-                                           rho_L,
-                                           data_q,
-                                           chi_threshold
-                                           )
-            # rho_L.tidyup(atol = 1e-8)
-            # apply the effective incoherent noise model
+    null_state = False
+    rho_L = psiL * psiL.dag()
+    do_nothing = []
+    replace_qubits = []
+    false_negative = []
+    probs_outcome = []
+    probs_incoherent_process = []
+    for data_q in range(L):
+        # apply Rloss with an angle phi
+        rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
+        # apply the QND detection unit
+        rho_L = apply_qnd_process_unit(chi_matrix,
+                                       rho_L,
+                                       data_q,
+                                       chi_threshold
+                                       )
+        # rho_L.tidyup(atol = 1e-8)
+        # apply the effective incoherent noise model
 
-            if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
-                prob_outcome = (rho_L * Pp_ancilla).tr()
-                if abs(prob_outcome.imag) > 1e-5:
-                    print("warning: im prob_outcome = {prob_outcome}")
-                if prob_outcome == 0:
-                    # the state cannot be projected
-                    # in the +1 eigenstate of the ancilla
-                    null_state = True
-                    print("check null state")
-                    exit()
-                if sub_case_ancilla[data_q] == 0:  # 1 - eps**2/2 - eta**2/4
-                    rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag() /
-                             abs(prob_outcome))
-                    do_nothing.append(data_q)
-                    probs_incoherent_process.append(1 - eps**2 / 2 - eta**2 / 4)
-                elif sub_case_ancilla[data_q] == 1:  # eta**2 / 4
-                    rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
-                             (1 - abs(prob_outcome)))
-                    rho_L = X[data_q] * rho_L * X[data_q].dag()
-                    rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                    replace_qubits.append(data_q)
-                    probs_incoherent_process.append(eta**2 / 4)
-                elif sub_case_ancilla[data_q] == 2:  # epsilon**2/4
-                    rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
-                             (1 - abs(prob_outcome)))
-                    rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                    replace_qubits.append(data_q)
-                    probs_incoherent_process.append(eps**2 / 4)
-                elif sub_case_ancilla[data_q] == 3:  # epsilon**2/4
-                    rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
-                                / abs(prob_outcome))
-                    rho_L = X[data_q] * rho_L * X[data_q].dag()
-                    do_nothing.append(data_q)
-                    probs_incoherent_process.append(eps**2 / 4)
-            elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
-                prob_outcome = (rho_L * Pm_ancilla).tr()
-                if abs(prob_outcome.imag) > 1e-5:
-                    print("warning: im prob_outcome = {prob_outcome}")
-                if prob_outcome == 0:
-                    null_state = True
-                    print("check null state")
-                    exit()
-                if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4
-                    rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag()
+        if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
+            prob_outcome = (rho_L * Pp_ancilla).tr()
+            if abs(prob_outcome.imag) > 1e-5:
+                print("warning: im prob_outcome = {prob_outcome}")
+            if prob_outcome == 0:
+                # the state cannot be projected
+                # in the +1 eigenstate of the ancilla
+                null_state = True
+                print("check null state")
+                exit()
+            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2/2 - eta**2/4
+                rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag() /
+                         abs(prob_outcome))
+                do_nothing.append(data_q)
+                probs_incoherent_process.append(1 - eps**2 / 2 - eta**2 / 4)
+            elif sub_case_ancilla[data_q] == 1:  # eta**2 / 4
+                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
+                         (1 - abs(prob_outcome)))
+                rho_L = X[data_q] * rho_L * X[data_q].dag()
+                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
+                replace_qubits.append(data_q)
+                probs_incoherent_process.append(eta**2 / 4)
+            elif sub_case_ancilla[data_q] == 2:  # epsilon**2/4
+                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
+                         (1 - abs(prob_outcome)))
+                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
+                replace_qubits.append(data_q)
+                probs_incoherent_process.append(eps**2 / 4)
+            elif sub_case_ancilla[data_q] == 3:  # epsilon**2/4
+                rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
                             / abs(prob_outcome))
-                    rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                    replace_qubits.append(data_q)
-                    probs_incoherent_process.append(1 - eps**2 / 4)
-                elif sub_case_ancilla[data_q] == 1:  # eps**2 / 4 false negative
-                    rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
-                            / (1-abs(prob_outcome)))
-                    rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                    do_nothing.append(data_q)
-                    probs_incoherent_process.append(eps**2 / 4)
+                rho_L = X[data_q] * rho_L * X[data_q].dag()
+                do_nothing.append(data_q)
+                probs_incoherent_process.append(eps**2 / 4)
+        elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
+            prob_outcome = (rho_L * Pm_ancilla).tr()
+            if abs(prob_outcome.imag) > 1e-5:
+                print("warning: im prob_outcome = {prob_outcome}")
+            if prob_outcome == 0:
+                null_state = True
+                print("check null state")
+                exit()
+            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4
+                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag()
+                        / abs(prob_outcome))
+                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
+                replace_qubits.append(data_q)
+                probs_incoherent_process.append(1 - eps**2 / 4)
+            elif sub_case_ancilla[data_q] == 1:  # eps**2 / 4 false negative
+                rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
+                        / (1-abs(prob_outcome)))
+                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
+                do_nothing.append(data_q)
+                probs_incoherent_process.append(eps**2 / 4)
 
-            probs_outcome.append(prob_outcome)
+        probs_outcome.append(prob_outcome)
 
-        prob_total_event = np.prod(probs_outcome) * np.prod(probs_incoherent_process)
-        cumulative_probability += prob_total_event
-        print("probs_outcome", np.array(probs_outcome))
-        print("probs_incoherent_process", np.array(probs_incoherent_process))
-        print(j_conf, outcomes_ancilla, sub_case_ancilla,
-              do_nothing,
-              replace_qubits,
+    prob_total_event = np.prod(probs_outcome) * np.prod(probs_incoherent_process)
+    cumulative_probability += prob_total_event
+    print("probs_outcome", np.array(probs_outcome))
+    print("probs_incoherent_process", np.array(probs_incoherent_process))
+    print(index_conf, outcomes_ancilla, sub_case_ancilla,
+          do_nothing,
+          replace_qubits,
+          false_negative,
+          # np.array(probs_outcome),
+          # np.array(probs_incoherent_process),
+          # np.prod(probs_outcome),
+          # f"{np.prod(probs_incoherent_process):4}",
+          f"{np.prod(probs_outcome)*np.prod(probs_incoherent_process):.4}",
+          f"{cumulative_probability:.4}"
+          )
+
+    if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
+        print(prob_total_event)
+        correction_successful = 0.0
+        prob_correction_logical_state.append(correction_successful)
+    else:
+        w_0 = rho_L.ptrace(do_nothing)
+        rho_L = qu.tensor([qu.fock_dm(3,0)] * len(replace_qubits)
+                           + [qu.fock_dm(3,2)] * len(false_negative)
+                           + [w_0]
+                           + [qu.fock_dm(2,0)])
+
+        print(replace_qubits,
               false_negative,
-              # np.array(probs_outcome),
-              # np.array(probs_incoherent_process),
-              # np.prod(probs_outcome),
-              # f"{np.prod(probs_incoherent_process):4}",
-              f"{np.prod(probs_outcome)*np.prod(probs_incoherent_process):.4}",
-              f"{cumulative_probability:.4}"
+              do_nothing
               )
-        if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
-            print(prob_total_event)
-            correction_successful = 0.0
-            prob_correction_logical_state.append(correction_successful)
-        else:
-            w_0 = rho_L.ptrace(do_nothing)
-            rho_L = qu.tensor([qu.fock_dm(3,0)] * len(replace_qubits)
-                               + [qu.fock_dm(3,2)] * len(false_negative)
-                               + [w_0]
-                               + [qu.fock_dm(2,0)])
+        permutation_order_q = {}
+        # the order in the for is important because redefine the state as
+        # ket(0) detected_losses , ket(2) false negative, kept_qubits
+        for j, el in enumerate(replace_qubits + false_negative + do_nothing):
+            permutation_order_q[el] = j
+            # print("permutation_order_q", permutation_order_q)
 
-            print(replace_qubits,
-                  false_negative,
-                  do_nothing
+        stab_qubits_new_order = []
+        for stab in stab_qubits:
+            stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
+
+        Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+        Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+
+        PPx = [[(Id + el) / 2, (Id - el) / 2] for el in Sx]
+        PPz = [[(Id + el) / 2, (Id - el) / 2] for el in Sz]
+
+        average_value_each_stab_meas = []
+        correction_each_measurement = []
+        index_stab_measurement = 0
+
+        cumulative_probability_stabilizers = 0.0
+
+        for meas_binary_X, meas_binary_Z in product(range(8), range(8)):
+            if abs(1 - cumulative_probability_stabilizers) < 1e-4:
+                # exit if the cumulative probability
+                # during the stabilizer measurement
+                # is already close to 1
+                break
+            state_after_measure = qu.Qobj(rho_L[:], dims = rho_L.dims)
+            configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
+            configuration_int_X = [int(_) for _ in configuration_str_X]
+            configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
+            configuration_int_Z = [int(_) for _ in configuration_str_Z]
+            probability_each_measurement = []
+            for stab_num, outcome_stab in enumerate(configuration_int_X):
+                prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr()
+                if np.abs(prob) > 0:
+                    state_after_measure = (PPx[stab_num][outcome_stab] *
+                                            state_after_measure *
+                                          PPx[stab_num][outcome_stab].dag() / prob)
+                    probability_each_measurement.append(np.real(prob))
+                else:
+                    probability_each_measurement.append(0)
+
+            for stab_num, outcome_stab in enumerate(configuration_int_Z):
+                prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr()
+                if np.abs(prob) > 0:
+                    state_after_measure = (PPz[stab_num][outcome_stab] *
+                                           state_after_measure *
+                                           PPz[stab_num][outcome_stab].dag() / prob)
+                    probability_each_measurement.append(np.real(prob))
+                else:
+                    probability_each_measurement.append(0)
+
+            # place where we can apply corrections but we don't
+
+            print(f"{index_stab_measurement: 4d}", configuration_int_X, configuration_int_Z,
+                  f"{np.prod(probability_each_measurement):1.4f}",
+                  f"{qu.expect(XL, state_after_measure):+1.4f}",
+                  f"{ qu.expect(ZL, state_after_measure):+1.4f}",
+                  f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
                   )
-            permutation_order_q = {}
-            # the order in the for is important because redefine the state as
-            # ket(0) detected_losses , ket(2) false negative, kept_qubits
-            for j, el in enumerate(replace_qubits + false_negative + do_nothing):
-                permutation_order_q[el] = j
-                # print("permutation_order_q", permutation_order_q)
+            prob_stabilizers = np.prod(probability_each_measurement)
+            cumulative_probability_stabilizers += prob_stabilizers
 
-            stab_qubits_new_order = []
-            for stab in stab_qubits:
-                stab_qubits_new_order.append([permutation_order_q[q] for q in stab])
+            if jLog in (0, 1):
+                correction_successful = (1 + abs(qu.expect(ZL, state_after_measure))) / 2
+            elif jLog in (2, 3):
+                correction_successful = (1 + abs(qu.expect(XL, state_after_measure))) / 2
+            elif jLog in (4, 5):
+                correction_successful = (1 + abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
 
-            Sx = [X[j1] * X[j2] * X[j3] * X[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
-            Sz = [Z[j1] * Z[j2] * Z[j3] * Z[j4] for j1,j2,j3,j4 in stab_qubits_new_order]
+            average_value_each_stab_meas.append(prob_stabilizers *
+                                                correction_successful
+                                                )
+            # conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
+            index_stab_measurement += 1
 
-            PPx = [[(Id + el) / 2, (Id - el) / 2] for el in Sx]
-            PPz = [[(Id + el) / 2, (Id - el) / 2] for el in Sz]
+        print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
+        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        conf_case_ancilla = int("".join(str(_) for _ in sub_case_ancilla))
+        res = ([phi_tilde,
+                conf_loss,
+                conf_case_ancilla,
+                np.real(np.sum(average_value_each_stab_meas)),
+                np.real(prob_total_event)
+                ])
 
-            average_value_each_stab_meas = []
-            correction_each_measurement = []
-            index_stab_measurement = 0
-
-            cumulative_probability_stabilizers = 0.0
-
-            for meas_binary_X, meas_binary_Z in product(range(8), range(8)):
-                if abs(1 - cumulative_probability_stabilizers) < 1e-4:
-                    # exit if the cumulative probability
-                    # during the stabilizer measurement
-                    # is already close to 1
-                    break
-                state_after_measure = qu.Qobj(rho_L[:], dims = rho_L.dims)
-                configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
-                configuration_int_X = [int(_) for _ in configuration_str_X]
-                configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
-                configuration_int_Z = [int(_) for _ in configuration_str_Z]
-                probability_each_measurement = []
-                for stab_num, outcome_stab in enumerate(configuration_int_X):
-                    prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr()
-                    if np.abs(prob) > 0:
-                        state_after_measure = (PPx[stab_num][outcome_stab] *
-                                                state_after_measure *
-                                              PPx[stab_num][outcome_stab].dag() / prob)
-                        probability_each_measurement.append(np.real(prob))
-                    else:
-                        probability_each_measurement.append(0)
-
-                for stab_num, outcome_stab in enumerate(configuration_int_Z):
-                    prob = (PPz[stab_num][outcome_stab] * state_after_measure).tr()
-                    if np.abs(prob) > 0:
-                        state_after_measure = (PPz[stab_num][outcome_stab] *
-                                               state_after_measure *
-                                               PPz[stab_num][outcome_stab].dag() / prob)
-                        probability_each_measurement.append(np.real(prob))
-                    else:
-                        probability_each_measurement.append(0)
-
-                # place where we can apply corrections but we don't
-
-                print(f"{index_stab_measurement: 4d}", configuration_int_X, configuration_int_Z,
-                      f"{np.prod(probability_each_measurement):1.4f}",
-                      f"{qu.expect(XL, state_after_measure):+1.4f}",
-                      f"{ qu.expect(ZL, state_after_measure):+1.4f}",
-                      f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
-                      )
-                prob_stabilizers = np.prod(probability_each_measurement)
-                cumulative_probability_stabilizers += prob_stabilizers
-
-                if jLog in (0, 1):
-                    correction_successful = (1 + abs(qu.expect(ZL, state_after_measure))) / 2
-                elif jLog in (2, 3):
-                    correction_successful = (1 + abs(qu.expect(XL, state_after_measure))) / 2
-                elif jLog in (4, 5):
-                    correction_successful = (1 + abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
-
-                average_value_each_stab_meas.append(prob_stabilizers *
-                                                    correction_successful
-                                                    )
-                # conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
-                index_stab_measurement += 1
-
-            print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
-            conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-            conf_case_ancilla = int("".join(str(_) for _ in sub_case_ancilla))
-            res = ([phi_tilde,
-                    conf_loss,
-                    conf_case_ancilla,
-                    np.real(np.sum(average_value_each_stab_meas)),
-                    np.real(prob_total_event)
-                    ])
-
-            final_p_loss.append(res)
-            np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
-                                                         '%07d\t' +
-                                                         '%07d\t' +
-                                                         '%.10e\t' +
-                                                         '%1.14f\t')
+        final_p_loss.append(res)
+        np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
+                                                     '%07d\t' +
+                                                     '%07d\t' +
+                                                     '%.10e\t' +
+                                                     '%1.14f\t')
+    index_conf += 1
 
 np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
                                              '%07d\t' +

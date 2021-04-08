@@ -115,10 +115,27 @@ basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
-# all_events = product(basis_events, repeat=L)
+all_events = product(basis_events, repeat=L)
 
-# trial_list = [randrange(6**7) for _ in range(num_trials)]
-# print(trial_list)
+all_probabilities = []
+for event in all_events:
+    outcomes_ancilla = [el[0] for el in event]
+    sub_case_ancilla = [el[1] for el in event]
+    p_0 = prob_loss**np.array(outcomes_ancilla)
+    p_1 = (1 - prob_loss)**(1 - np.array(outcomes_ancilla))
+    prob_loss_event = np.prod(p_0) * np.prod(p_1)
+    prob_inchoerent = np.prod([basic_event_probs[str(_)]
+                               for _ in sub_case_ancilla
+                               ])
+    all_probabilities.append(prob_loss_event * prob_inchoerent)
+
+
+sorted_index = np.argsort(all_probabilities)[::-1][:num_trials]
+
+trial_list = []
+for x in sorted_index:
+    str_event = np.base_repr(x, base=6).zfill(L)
+    trial_list.append([basic_event_str[el_event] for el_event in str_event])
 
 now = datetime.datetime.now()
 final_data_name = (now.strftime("%Y%m%d%H%M") +
@@ -134,17 +151,10 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 index_conf = 0
 cumulative_probability = 0
 
-done_events = []
-while len(done_events) < num_trials:
-    event, event_str = create_random_event(prob_loss, basic_event_probs)
-    if event_str in done_events:
-        continue
-    done_events.append(event_str)
-    print(index_conf, event_str)
+index_conf = 0
+cumulative_probability = 0
 
-    if index_conf == num_trials:
-        break
-
+for event in trial_list:
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
 

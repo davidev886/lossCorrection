@@ -51,7 +51,7 @@ parser.add_argument('--p_overrot_1',
                     )
 parser.add_argument('--num_trials',
                     type=int,
-                    default=10000,
+                    default=4000,
                     help="Number of Monte Carlo samples"
                     )
 parser.add_argument('--p_err_stab',

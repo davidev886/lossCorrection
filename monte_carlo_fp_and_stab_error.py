@@ -72,6 +72,12 @@ folder_name = args.dir_name
 num_trials = args.num_trials
 p_err_stab = args.p_err_stab
 
+
+p1MS = (args.p_overrot_2 * np.pi / 2 / 2)**2
+p_err_stab = 4 * p1MS
+
+print(p_err_stab)
+
 choi_ideal = np.loadtxt("choi_op/choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("choi_op/qubitqutrit_choi_noloss.csv",

@@ -106,7 +106,7 @@ SingleOverRotations = SingleOverRotQubitAll(p_overrot_1 * np.pi)
 now = datetime.datetime.now()
 final_data_name = (now.strftime("%Y%m%d%H%M") +
                    f"_state_{LogicalStates_str[jLog]}_" +
-                   f"phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat"
+                   f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat"
                    )
 file_data_name = os.path.join(folder_name,
                               final_data_name
@@ -262,7 +262,7 @@ for outcomes_ancilla in all_loss_events:
             cumulative_probability_stabilizers += prob_stabilizers
             exp_x = np.real(qu.expect(XL, state_after_measure))
             exp_z = np.real(qu.expect(ZL, state_after_measure))
-            exp_y = 1j * np.real(qu.expect(XL * ZL, state_after_measure))
+            exp_y = np.real(qu.expect(1j* XL * ZL, state_after_measure))
             print(conf_int_X,
                   conf_int_Z,
                   f"{prob_stabilizers:1.4f}",
@@ -296,14 +296,8 @@ for outcomes_ancilla in all_loss_events:
 
         np.savetxt(file_data_name,
                    final_p_loss,
-                   fmt='%1.3f\t' +
+                   fmt='%1.5f\t' +
                        '%07d\t' +
-                       '%.10e\t' +
-                       '%1.12f\t')
+                       '%.18e\t' +
+                       '%.18e\t')
 
-np.savetxt(file_data_name,
-           final_p_loss,
-           fmt='%1.3f\t' +
-               '%07d\t' +
-               '%.10e\t' +
-               '%1.12f\t')

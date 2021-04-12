@@ -225,11 +225,11 @@ for outcomes_ancilla in all_loss_events:
         cumulative_probability_stabilizers = 0.0
 
         for meas_binary_X, meas_binary_Z in product(range(8), range(8)):
-            if abs(1 - cumulative_probability_stabilizers) < 1e-4:
+            # if abs(1 - cumulative_probability_stabilizers) < 1e-4:
                 # exit if the cumulative probability
                 # during the stabilizer measurement
                 # is already close to 1
-                break
+            #    break
             state_after_measure = qu.Qobj(rho_L[:], dims=rho_L.dims)
             conf_str_X = bin(meas_binary_X)[2:].zfill(3)
             conf_int_X = [int(_) for _ in conf_str_X]
@@ -262,7 +262,7 @@ for outcomes_ancilla in all_loss_events:
             cumulative_probability_stabilizers += prob_stabilizers
             exp_x = np.real(qu.expect(XL, state_after_measure))
             exp_z = np.real(qu.expect(ZL, state_after_measure))
-            exp_y = np.real(qu.expect(1j* XL * ZL, state_after_measure))
+            exp_y = np.real(qu.expect(1j * XL * ZL, state_after_measure))
             print(conf_int_X,
                   conf_int_Z,
                   f"{prob_stabilizers:1.4f}",

@@ -110,6 +110,17 @@ basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
                      '4': (1 - eps**2 / 4),
                      '5': eps**2 / 4
                      }
+print(basic_event_probs)
+
+basic_event_probs = {'0': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(a)
+                     '1': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
+                     '2': np.sin(eps)**2/4.,  # 1(d)
+                     '3': np.sin(eps)**2/4.,  # 1(b)
+                     '4': np.cos(eps/2.)**2,  # 2(a)
+                     '5': np.sin(eps)**2/4.,  # 2(b)
+                     }
+
+print(basic_event_probs)
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
@@ -169,6 +180,7 @@ for event in trial_list:
     false_negative = []
     probs_outcome = []
     probs_incoherent_process = []
+
     for data_q in range(L):
         # apply Rloss with an angle phi
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
@@ -191,30 +203,30 @@ for event in trial_list:
                 null_state = True
                 print("check null state")
                 exit()
-            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2/2 - eta**2/4
+            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2/2 - eta**2/4 1a
                 rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag() /
                          abs(prob_outcome))
                 do_nothing.append(data_q)
-                probs_incoherent_process.append(1 - eps**2 / 2 - eta**2 / 4)
-            elif sub_case_ancilla[data_q] == 1:  # eta**2 / 4
+
+            elif sub_case_ancilla[data_q] == 1:  # eta**2 / 4  1c
                 rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
                          (1 - abs(prob_outcome)))
                 rho_L = X[data_q] * rho_L * X[data_q].dag()
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 replace_qubits.append(data_q)
-                probs_incoherent_process.append(eta**2 / 4)
-            elif sub_case_ancilla[data_q] == 2:  # epsilon**2/4
+
+            elif sub_case_ancilla[data_q] == 2:  # epsilon**2/4  1d
                 rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
                          (1 - abs(prob_outcome)))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 replace_qubits.append(data_q)
-                probs_incoherent_process.append(eps**2 / 4)
-            elif sub_case_ancilla[data_q] == 3:  # epsilon**2/4
+
+            elif sub_case_ancilla[data_q] == 3:  # epsilon**2/4 1b
                 rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
                             / abs(prob_outcome))
                 rho_L = X[data_q] * rho_L * X[data_q].dag()
                 do_nothing.append(data_q)
-                probs_incoherent_process.append(eps**2 / 4)
+
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
             prob_outcome = (rho_L * Pm_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5:
@@ -223,19 +235,20 @@ for event in trial_list:
                 null_state = True
                 print("check null state")
                 exit()
-            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4
+            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4  2a
                 rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag()
                         / abs(prob_outcome))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 replace_qubits.append(data_q)
-                probs_incoherent_process.append(1 - eps**2 / 4)
-            elif sub_case_ancilla[data_q] == 1:  # eps**2 / 4 false negative
+
+            elif sub_case_ancilla[data_q] == 1:  # eps**2 / 4 false negative 2b
                 rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
                         / (1-abs(prob_outcome)))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 do_nothing.append(data_q)
-                probs_incoherent_process.append(eps**2 / 4)
 
+        incoherent_process = str(sub_case_ancilla[data_q])
+        probs_incoherent_process.append(basic_event_probs[incoherent_process])
         probs_outcome.append(prob_outcome)
 
     prob_total_event = np.prod(probs_outcome) * np.prod(probs_incoherent_process)

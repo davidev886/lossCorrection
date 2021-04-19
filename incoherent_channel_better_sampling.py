@@ -117,7 +117,7 @@ basic_event_probs = {'0': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  #
                      '2': np.sin(eps)**2/4.,  # 1(d)
                      '3': np.sin(eps)**2/4.,  # 1(b)
                      '4': np.cos(eps/2.)**2,  # 2(a)
-                     '5': np.sin(eps)**2/4.,  # 2(b)
+                     '5': np.sin(eps/2.)**2,  # 2(b)
                      }
 
 print(basic_event_probs)

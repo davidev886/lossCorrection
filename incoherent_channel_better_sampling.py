@@ -247,6 +247,12 @@ for event in trial_list:
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 do_nothing.append(data_q)
 
+        # renormalize if the trace of rho_L is bigger than 1
+        # because of accumulated errorr
+        traccia = rho_L.tr()
+        if traccia > 1:
+            rho_L = rho_L / traccia
+
         incoherent_process = str(sub_case_ancilla[data_q])
         probs_incoherent_process.append(basic_event_probs[incoherent_process])
         probs_outcome.append(prob_outcome)

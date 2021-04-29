@@ -117,7 +117,7 @@ basic_event_probs = {'0': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  #
                      '2': np.sin(eps)**2/4.,  # 1(d)
                      '3': np.sin(eps)**2/4.,  # 1(b)
                      '4': np.cos(eps/2.)**2,  # 2(a)
-                     '5': np.sin(eps)**2/4.,  # 2(b)
+                     '5': np.sin(eps/2.)**2,  # 2(b)
                      }
 
 print(basic_event_probs)
@@ -152,7 +152,7 @@ for x in sorted_index:
 now = datetime.datetime.now()
 final_data_name = (now.strftime("%Y%m%d%H%M") +
                    f"_state_{LogicalStates_str[jLog]}_" +
-                   f"phi_{phi_tilde:1.2f}_eps_{epsilon_choi}.dat"
+                   f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat"
                    )
 file_data_name = os.path.join(folder_name,
                               final_data_name
@@ -247,6 +247,12 @@ for event in trial_list:
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 do_nothing.append(data_q)
 
+        # renormalize if the trace of rho_L is bigger than 1
+        # because of accumulated errorr
+        traccia = rho_L.tr()
+        if traccia > 1:
+            rho_L = rho_L / traccia
+
         incoherent_process = str(sub_case_ancilla[data_q])
         probs_incoherent_process.append(basic_event_probs[incoherent_process])
         probs_outcome.append(prob_outcome)
@@ -306,11 +312,11 @@ for event in trial_list:
         cumulative_probability_stabilizers = 0.0
 
         for meas_binary_X, meas_binary_Z in product(range(8), range(8)):
-            if abs(1 - cumulative_probability_stabilizers) < 1e-4:
+            # if abs(1 - cumulative_probability_stabilizers) < 1e-4:
                 # exit if the cumulative probability
                 # during the stabilizer measurement
                 # is already close to 1
-                break
+               #  break
             state_after_measure = qu.Qobj(rho_L[:], dims=rho_L.dims)
             configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
             configuration_int_X = [int(_) for _ in configuration_str_X]
@@ -374,14 +380,14 @@ for event in trial_list:
                 ])
 
         final_p_loss.append(res)
-        np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
+        np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
                                                      '%07d\t' +
                                                      '%07d\t' +
                                                      '%.10e\t' +
                                                      '%1.14f\t')
     index_conf += 1
 
-np.savetxt(file_data_name, final_p_loss, fmt='%1.3f\t' +
+np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
                                              '%07d\t' +
                                              '%07d\t' +
                                              '%.10e\t' +

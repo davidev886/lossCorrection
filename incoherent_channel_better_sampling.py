@@ -234,23 +234,13 @@ for event in trial_list:
             if prob_outcome == 0:
                 null_state = True
                 print("check null state")
-<<<<<<< HEAD
-                break #exit()
-            if sub_case_ancilla[data_q] == 0:  # 2a
-=======
-                exit()
+                break  # exit()
             if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4  2a
->>>>>>> f31031a474ad4a28f9b5a1e9e979c771312b1a42
                 rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag()
                         / abs(prob_outcome))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 replace_qubits.append(data_q)
-
-<<<<<<< HEAD
-            elif sub_case_ancilla[data_q] == 1:  #2b
-=======
             elif sub_case_ancilla[data_q] == 1:  # eps**2 / 4 false negative 2b
->>>>>>> f31031a474ad4a28f9b5a1e9e979c771312b1a42
                 rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
                         / (1-abs(prob_outcome)))
                 rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla

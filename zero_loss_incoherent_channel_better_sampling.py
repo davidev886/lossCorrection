@@ -11,6 +11,7 @@ from utils.p_operators_qutrit import *
 from utils.binary_conf import create_random_event
 import datetime
 import argparse
+import glob
 
 np.set_printoptions(precision=4, suppress=True)
 
@@ -91,9 +92,26 @@ rotation_ops = Rloss_all(phi_tilde * np.pi)
 
 LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
+now = datetime.datetime.now()
+final_data_name = (now.strftime("%Y%m%d%H%M") +
+                   f"_state_{LogicalStates_str[jLog]}_" +
+                   f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat"
+                   )
+
+
+print("asas")
+
+file_to_look = os.path.join(folder_name,
+                            f"*_state_{LogicalStates_str[jLog]}_" +
+                            f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat")
+
+print(file_to_look)
+found_files = glob.glob(file_to_look)
+are_there_trials = len(found_files)
+
+
 basis_events = [[0, _] for _ in range(4)]
                 # [[1, _] for _ in range(2)]
-
 
 basic_event_str = {'0': (0, 0),
                    '1': (0, 1),
@@ -149,11 +167,7 @@ for x in sorted_index:
 # trial_list = [randrange(6**7) for _ in range(num_trials)]
 # print(trial_list)
 
-now = datetime.datetime.now()
-final_data_name = (now.strftime("%Y%m%d%H%M") +
-                   f"_state_{LogicalStates_str[jLog]}_" +
-                   f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat"
-                   )
+
 file_data_name = os.path.join(folder_name,
                               final_data_name
                               )
@@ -278,6 +292,14 @@ for event in trial_list:
         print(prob_total_event)
         correction_successful = 0.0
         prob_correction_logical_state.append(correction_successful)
+        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        conf_case_ancilla = int("".join(str(_) for _ in sub_case_ancilla))
+        res = ([phi_tilde,
+                conf_loss,
+                conf_case_ancilla,
+                correction_successful,
+                np.real(prob_total_event)
+                ])
     else:
         w_0 = rho_L.ptrace(do_nothing)
         rho_L = qu.tensor([qu.fock_dm(3,0)] * len(replace_qubits)
@@ -381,12 +403,12 @@ for event in trial_list:
                 np.real(prob_total_event)
                 ])
 
-        final_p_loss.append(res)
-        np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
-                                                     '%07d\t' +
-                                                     '%07d\t' +
-                                                     '%.10e\t' +
-                                                     '%1.14f\t')
+    final_p_loss.append(res)
+    np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
+                                                 '%07d\t' +
+                                                 '%07d\t' +
+                                                 '%.10e\t' +
+                                                 '%1.14f\t')
     index_conf += 1
 
 np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +

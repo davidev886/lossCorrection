@@ -156,7 +156,7 @@ for event in all_events:
     all_probabilities.append(prob_loss_event * prob_inchoerent)
     print(event, prob_loss_event * prob_inchoerent)
 
-if num_trial:
+if num_trials:
     sorted_index = np.argsort(all_probabilities)[::-1][:num_trials]
 else:
     sorted_index = np.argsort(all_probabilities)[::-1]

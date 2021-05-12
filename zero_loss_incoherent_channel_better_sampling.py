@@ -154,7 +154,7 @@ for event in all_events:
                                for _ in sub_case_ancilla
                                ])
     all_probabilities.append(prob_loss_event * prob_inchoerent)
-    print(event, prob_loss_event * prob_inchoerent)
+
 
 if num_trials:
     sorted_index = np.argsort(all_probabilities)[::-1][:num_trials]
@@ -184,8 +184,8 @@ for event in trial_list:
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
 
-    print("event", event)
-    print("outcomes_ancilla", outcomes_ancilla)
+    # print("event", event)
+    # print("outcomes_ancilla", outcomes_ancilla)
 
     prob_correction_logical_state = []
     psiL = LogicalStates[jLog]
@@ -288,7 +288,7 @@ for event in trial_list:
           # np.prod(probs_outcome),
           # f"{np.prod(probs_incoherent_process):4}",
           f"{np.prod(probs_outcome)*np.prod(probs_incoherent_process):.4}",
-          f"{cumulative_probability:.4}"
+          f"{1-cumulative_probability:.4e}"
           )
 
     if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:

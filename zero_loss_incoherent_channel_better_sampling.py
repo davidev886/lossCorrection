@@ -1,16 +1,20 @@
 #
 # Case 2: incoherent model for the overrotations
+# with no loss rotations
 # run on the first most probable events
 #
 
 import qutip as qu
 import numpy as np
+from itertools import product
 
 import os
-from utils.p_operators_qutrit import *
+# from utils.p_operators_qutrit import *
+from utils.p_operators import *
 from utils.binary_conf import create_random_event
 import datetime
 import argparse
+
 import glob
 
 np.set_printoptions(precision=4, suppress=True)
@@ -83,12 +87,12 @@ if not os.path.exists(folder_name):
 
 choi = choi_ideal
 
-T_matrix = give_transformation_matrix()
-chi_matrix = get_chi_from_choi(choi, T_matrix)
+# T_matrix = give_transformation_matrix()
+# chi_matrix = get_chi_from_choi(choi, T_matrix)
 
 final_p_loss = []
 
-rotation_ops = Rloss_all(phi_tilde * np.pi)
+# rotation_ops = Rloss_all(phi_tilde * np.pi)
 
 LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
@@ -98,17 +102,13 @@ final_data_name = (now.strftime("%Y%m%d%H%M") +
                    f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat"
                    )
 
-
-print("asas")
-
 file_to_look = os.path.join(folder_name,
                             f"*_state_{LogicalStates_str[jLog]}_" +
                             f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat")
 
-print(file_to_look)
+
 found_files = glob.glob(file_to_look)
 are_there_trials = len(found_files)
-
 
 basis_events = [[0, _] for _ in range(4)]
                 # [[1, _] for _ in range(2)]
@@ -128,7 +128,7 @@ basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
                      '4': (1 - eps**2 / 4),
                      '5': eps**2 / 4
                      }
-print(basic_event_probs)
+
 
 basic_event_probs = {'0': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(a)
                      '1': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
@@ -138,12 +138,11 @@ basic_event_probs = {'0': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  #
                      '5': np.sin(eps/2.)**2,  # 2(b)
                      }
 
-print(basic_event_probs)
+
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
 all_events = product(basis_events, repeat=L)
-
 all_probabilities = []
 for event in all_events:
     outcomes_ancilla = [el[0] for el in event]
@@ -155,18 +154,22 @@ for event in all_events:
                                for _ in sub_case_ancilla
                                ])
     all_probabilities.append(prob_loss_event * prob_inchoerent)
+    print(event, prob_loss_event * prob_inchoerent)
 
+if num_trial:
+    sorted_index = np.argsort(all_probabilities)[::-1][:num_trials]
+else:
+    sorted_index = np.argsort(all_probabilities)[::-1]
 
-sorted_index = np.argsort(all_probabilities)[::-1][:num_trials]
 
 trial_list = []
 for x in sorted_index:
-    str_event = np.base_repr(x, base=6).zfill(L)
+    str_event = np.base_repr(x,
+                             base=len(basis_events)).zfill(L)
+    # print(f"{x: 5d}", f"{all_probabilities[x]:1.4f}", str_event)
     trial_list.append([basic_event_str[el_event] for el_event in str_event])
 
 # trial_list = [randrange(6**7) for _ in range(num_trials)]
-# print(trial_list)
-
 
 file_data_name = os.path.join(folder_name,
                               final_data_name
@@ -181,8 +184,8 @@ for event in trial_list:
     outcomes_ancilla = [el[0] for el in event]
     sub_case_ancilla = [el[1] for el in event]
 
-    print(event)
-    print(outcomes_ancilla)
+    print("event", event)
+    print("outcomes_ancilla", outcomes_ancilla)
 
     prob_correction_logical_state = []
     psiL = LogicalStates[jLog]
@@ -301,11 +304,13 @@ for event in trial_list:
                 np.real(prob_total_event)
                 ])
     else:
+        if len(false_negative):
+            print("There is an error: we canno have false negative")
+            exit()
         w_0 = rho_L.ptrace(do_nothing)
-        rho_L = qu.tensor([qu.fock_dm(3,0)] * len(replace_qubits)
-                           + [qu.fock_dm(3,2)] * len(false_negative)
+        rho_L = qu.tensor([qu.fock_dm(dimQ, 0)] * len(replace_qubits)
                            + [w_0]
-                           + [qu.fock_dm(2,0)])
+                           + [qu.fock_dm(dimQ, 0)])
 
         print(replace_qubits,
               false_negative,
@@ -339,7 +344,7 @@ for event in trial_list:
                 # exit if the cumulative probability
                 # during the stabilizer measurement
                 # is already close to 1
-               #  break
+                # break
             state_after_measure = qu.Qobj(rho_L[:], dims=rho_L.dims)
             configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
             configuration_int_X = [int(_) for _ in configuration_str_X]
@@ -347,7 +352,8 @@ for event in trial_list:
             configuration_int_Z = [int(_) for _ in configuration_str_Z]
             probability_each_measurement = []
             for stab_num, outcome_stab in enumerate(configuration_int_X):
-                prob = (PPx[stab_num][outcome_stab] * state_after_measure).tr()
+                prob = (PPx[stab_num][outcome_stab] *
+                        state_after_measure).tr()
                 if np.abs(prob) > 0:
                     state_after_measure = (PPx[stab_num][outcome_stab] *
                                             state_after_measure *
@@ -376,6 +382,7 @@ for event in trial_list:
                   f"{qu.expect(ZL, state_after_measure):+1.4f}",
                   f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
                   )
+
             prob_stabilizers = np.prod(probability_each_measurement)
             cumulative_probability_stabilizers += prob_stabilizers
 

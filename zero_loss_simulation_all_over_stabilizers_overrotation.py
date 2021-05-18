@@ -8,9 +8,9 @@ import qutip as qu
 import os
 from itertools import product
 from utils.binary_conf import binary_configurations
-from utils.p_operators_qutrit import *
-from utils.overrotation_channel import (CorrelatedOverRotQubitAll,
-                                        SingleOverRotQubitAll)
+from utils.p_operators import *
+# from utils.overrotation_channel import (CorrelatedOverRotQubitAll,
+#                                         SingleOverRotQubitAll)
 import datetime
 
 import argparse
@@ -89,13 +89,13 @@ choi = np.real((1 - epsilon_choi) * choi_ideal +
                6 * epsilon_choi * choi_experiment
                )
 
-T_matrix = give_transformation_matrix()
-chi_matrix = get_chi_from_choi(choi, T_matrix)
-chi_matrix[np.abs(chi_matrix) < chi_threshold] = 0
+# T_matrix = give_transformation_matrix()
+# chi_matrix = get_chi_from_choi(choi, T_matrix)
+# chi_matrix[np.abs(chi_matrix) < chi_threshold] = 0
 
 final_p_loss = []
 
-rotation_ops = Rloss_all(phi_tilde * np.pi)
+# rotation_ops = Rloss_all(phi_tilde * np.pi)
 result_correction = []
 
 LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
@@ -194,7 +194,7 @@ for outcomes_ancilla in all_loss_events:
         prob_correction_logical_state.append(correction_successful)
     else:
         w_0 = rho_L.ptrace(kept_qubits)
-        rho_L = (qu.tensor([qu.fock_dm(3, 0)] * len(losses) +
+        rho_L = (qu.tensor([qu.fock_dm(2, 0)] * len(losses) +
                  [w_0] +
                  [qu.fock_dm(2, 0)])
                  )

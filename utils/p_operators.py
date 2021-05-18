@@ -86,3 +86,65 @@ Za = qu.tensor(temp)
 
 Pp_ancilla = (Id + Za) / 2
 Pm_ancilla = (Id - Za) / 2
+
+
+def CorrelatedOverRotQubit(qutrit_n, alpha):
+    dimHq = 2
+    dimHa = 2
+    # X_qutrit = qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+    # ket22bra = qu.Qobj([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
+    X_qutrit = qu.sigmax()
+    ket22bra = qu.Qobj([[0, 0], [0, 0]])
+    Id = [qu.qeye(dimHq)] * L + [qu.qeye(dimHa)]
+
+    XX_operators_1 = ([qu.qeye(dimHq)] * qutrit_n +
+                      [X_qutrit] +
+                      [qu.qeye(dimHq)] * (L - qutrit_n - 1) +
+                      [qu.sigmax()]
+                      )
+    XX_operators_2 = ([qu.qeye(dimHq)] * qutrit_n +
+                      [ket22bra] +
+                      [qu.qeye(dimHq)] * (L - qutrit_n - 1) +
+                      [qu.qeye(dimHa)]
+                      )
+
+    corr = (np.cos(alpha / 2) * qu.tensor(Id) +
+            1j * np.sin(alpha / 2) * (qu.tensor(XX_operators_1) +
+            qu.tensor(XX_operators_2))
+            )
+
+    return corr
+
+def CorrelatedOverRotQubitAll(alpha):
+    return [CorrelatedOverRotQubit(qutrit_n, alpha) for qutrit_n in range(L)]
+
+
+def SingleOverRotQubit(qutrit_n, theta):
+    dimHq = 2
+    dimHa = 2
+    # X_qutrit = qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+    # ket22bra = qu.Qobj([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
+
+    X_qutrit = qu.sigmax()
+    ket22bra = qu.Qobj([[0, 0], [0, 0]])
+
+    R1q = (np.cos(theta / 2) * (qu.qeye(dimHq) - ket22bra) -
+           1j * np.sin(theta / 2) * X_qutrit +
+           ket22bra
+           )
+    R1a = (np.cos(theta / 2) * qu.qeye(dimHa) -
+           1j * np.sin(theta / 2) * qu.sigmax()
+           )
+
+    OverRotSingle = ([qu.qeye(dimHq)] * qutrit_n +
+                     [R1q] +
+                     [qu.qeye(dimHq)] * (L - qutrit_n - 1) +
+                     [R1a]
+                     )
+    corr = qu.tensor(OverRotSingle)
+
+    return corr
+
+
+def SingleOverRotQubitAll(theta):
+    return [SingleOverRotQubit(qutrit_n, theta) for qutrit_n in range(L)]

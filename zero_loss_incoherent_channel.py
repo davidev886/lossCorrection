@@ -13,6 +13,7 @@ import os
 from utils.p_operators import *
 from utils.binary_conf import create_random_event
 from utils.parameters import parse_command_line
+from utils.incoherent_channel import inc_channel
 import datetime
 
 
@@ -31,6 +32,7 @@ eta = args.p_overrot_2 * np.pi
 eps = args.p_overrot_1 * np.pi
 folder_name = args.dir_name
 num_trials = args.num_trials
+VERBOSE = args.verbose
 choi_ideal = np.loadtxt("choi_op/choiFinal_ideal.dat")
 
 choi_experiment = np.genfromtxt("choi_op/qubitqutrit_choi_noloss.csv",
@@ -58,74 +60,17 @@ final_data_name = (now.strftime("%Y%m%d%H%M") +
                    f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat"
                    )
 
-file_to_look = os.path.join(folder_name,
-                            f"*_state_{LogicalStates_str[jLog]}_" +
-                            f"phi_{phi_tilde:1.5f}_eps_{epsilon_choi}.dat")
-
-
-found_files = glob.glob(file_to_look)
-are_there_trials = len(found_files)
-
-basis_events = [[0, _] for _ in range(4)]
-                # [[1, _] for _ in range(2)]
-
-basic_event_str = {'0': (0, 0),
-                   '1': (0, 1),
-                   '2': (0, 2),
-                   '3': (0, 3),
-                   '4': (1, 0),
-                   '5': (1, 1)
-                   }
-
-basic_event_probs = {'0': (1 - eps**2 / 2 - eta**2 / 4),
-                     '1': eta**2 / 4,
-                     '2': eps**2 / 4,
-                     '3': eps**2 / 4,
-                     '4': (1 - eps**2 / 4),
-                     '5': eps**2 / 4
+basic_event_probs = {'1a': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(a)
+                     '1b': np.sin(eps)**2/4.,  # 1(b)
+                     '1c': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
+                     '1d': np.sin(eps)**2/4.,  # 1(d)
+                     '2a': np.cos(eps/2.)**2,  # 2(a)
+                     '2b': np.sin(eps/2.)**2,  # 2(b)
                      }
-
-
-basic_event_probs = {'0': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(a)
-                     '1': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
-                     '2': np.sin(eps)**2/4.,  # 1(d)
-                     '3': np.sin(eps)**2/4.,  # 1(b)
-                     '4': np.cos(eps/2.)**2,  # 2(a)
-                     '5': np.sin(eps/2.)**2,  # 2(b)
-                     }
-
-
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
-all_events = product(basis_events, repeat=L)
-all_probabilities = []
-for event in all_events:
-    outcomes_ancilla = [el[0] for el in event]
-    sub_case_ancilla = [el[1] for el in event]
-    p_0 = prob_loss**np.array(outcomes_ancilla)
-    p_1 = (1 - prob_loss)**(1 - np.array(outcomes_ancilla))
-    prob_loss_event = np.prod(p_0) * np.prod(p_1)
-    prob_inchoerent = np.prod([basic_event_probs[str(_)]
-                               for _ in sub_case_ancilla
-                               ])
-    all_probabilities.append(prob_loss_event * prob_inchoerent)
-
-
-if num_trials:
-    sorted_index = np.argsort(all_probabilities)[::-1][:num_trials]
-else:
-    sorted_index = np.argsort(all_probabilities)[::-1]
-
-
-trial_list = []
-for x in sorted_index:
-    str_event = np.base_repr(x,
-                             base=len(basis_events)).zfill(L)
-    # print(f"{x: 5d}", f"{all_probabilities[x]:1.4f}", str_event)
-    trial_list.append([basic_event_str[el_event] for el_event in str_event])
-
-# trial_list = [randrange(6**7) for _ in range(num_trials)]
+all_events = product([0, 1], repeat=L)
 
 file_data_name = os.path.join(folder_name,
                               final_data_name
@@ -136,21 +81,15 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 index_conf = 0
 cumulative_probability = 0
 
-for event in trial_list:
-    outcomes_ancilla = [el[0] for el in event]
-    sub_case_ancilla = [el[1] for el in event]
+for outcomes_ancilla in all_events:
 
-    # print("event", event)
-    # print("outcomes_ancilla", outcomes_ancilla)
-
-    prob_correction_logical_state = []
     psiL = LogicalStates[jLog]
 
     null_state = False
     rho_L = psiL * psiL.dag()
     do_nothing = []
     replace_qubits = []
-    false_negative = []
+
     probs_outcome = []
     probs_incoherent_process = []
 
@@ -166,8 +105,15 @@ for event in trial_list:
         # rho_L.tidyup(atol = 1e-8)
         # apply the effective incoherent noise model
 
+        channel = inc_channel(basic_event_probs,
+                              data_q
+                              )
+        rho_L = channel(rho_L)
+        prob_outcome0 = (rho_L * Pp_ancilla).tr()
+
         if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
-            prob_outcome = (rho_L * Pp_ancilla).tr()
+            prob_outcome = prob_outcome0
+
             if abs(prob_outcome.imag) > 1e-5:
                 print("warning: im prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
@@ -176,50 +122,24 @@ for event in trial_list:
                 null_state = True
                 print("check null state")
                 break  # exit()
-            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2/2 - eta**2/4 1a
-                rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag() /
-                         abs(prob_outcome))
-                do_nothing.append(data_q)
 
-            elif sub_case_ancilla[data_q] == 1:  # eta**2 / 4  1c
-#                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
-#                         (1 - abs(prob_outcome)))
-                rho_L = Xa * rho_L * Xa.dag()  # flip the ancilla
-                rho_L = X[data_q] * rho_L * X[data_q].dag()
-                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                replace_qubits.append(data_q)
-
-            elif sub_case_ancilla[data_q] == 2:  # epsilon**2/4  1d
-                #                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag() /
-                #         (1 - abs(prob_outcome)))
-                rho_L = Xa * rho_L * Xa.dag()  # flip the ancilla
-                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                replace_qubits.append(data_q)
-
-            elif sub_case_ancilla[data_q] == 3:  # epsilon**2/4 1b
-                rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
-                            / abs(prob_outcome))
-                rho_L = X[data_q] * rho_L * X[data_q].dag()
-                do_nothing.append(data_q)
+            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
+            do_nothing.append(data_q)
 
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
-            prob_outcome = (rho_L * Pm_ancilla).tr()
+            prob_outcome = 1 - prob_outcome0
+
             if abs(prob_outcome.imag) > 1e-5:
                 print("warning: im prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
+                # the state cannot be projected
+                # in the +1 eigenstate of the ancilla
                 null_state = True
                 print("check null state")
                 break  # exit()
-            if sub_case_ancilla[data_q] == 0:  # 1 - eps**2 / 4  2a
-                rho_L = (Pm_ancilla * rho_L * Pm_ancilla.dag()
-                        / abs(prob_outcome))
-                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                replace_qubits.append(data_q)
-            elif sub_case_ancilla[data_q] == 1:  # eps**2 / 4 false negative 2b
-                rho_L = (Pp_ancilla * rho_L * Pp_ancilla.dag()
-                        / (1-abs(prob_outcome)))
-                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-                do_nothing.append(data_q)
+            rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
+            replace_qubits.append(data_q)
+            rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
 
         # renormalize if the trace of rho_L is bigger than 1
         # because of accumulated errorr
@@ -227,55 +147,41 @@ for event in trial_list:
         if traccia > 1:
             rho_L = rho_L / traccia
 
-        incoherent_process = str(sub_case_ancilla[data_q])
-        probs_incoherent_process.append(basic_event_probs[incoherent_process])
         probs_outcome.append(prob_outcome)
 
-    prob_total_event = np.prod(probs_outcome) * np.prod(probs_incoherent_process)
+    prob_total_event = np.prod(probs_outcome)
     cumulative_probability += prob_total_event
     print("probs_outcome", np.array(probs_outcome))
-    print("probs_incoherent_process", np.array(probs_incoherent_process))
-    print(index_conf, outcomes_ancilla, sub_case_ancilla,
+    print(index_conf, outcomes_ancilla,
           do_nothing,
           replace_qubits,
-          false_negative,
-          # np.array(probs_outcome),
-          # np.array(probs_incoherent_process),
-          # np.prod(probs_outcome),
-          # f"{np.prod(probs_incoherent_process):4}",
-          f"{np.prod(probs_outcome)*np.prod(probs_incoherent_process):.4}",
+          f"{prob_total_event:.4}",
           f"{1-cumulative_probability:.4e}"
           )
 
     if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
-        print(prob_total_event)
         correction_successful = 0.0
-        prob_correction_logical_state.append(correction_successful)
+
         conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-        conf_case_ancilla = int("".join(str(_) for _ in sub_case_ancilla))
         res = ([phi_tilde,
                 conf_loss,
-                conf_case_ancilla,
                 correction_successful,
                 np.real(prob_total_event)
                 ])
     else:
-        if len(false_negative):
-            print("There is an error: we canno have false negative")
-            exit()
+
         w_0 = rho_L.ptrace(do_nothing)
         rho_L = qu.tensor([qu.fock_dm(dimQ, 0)] * len(replace_qubits)
                            + [w_0]
                            + [qu.fock_dm(dimQ, 0)])
 
         print(replace_qubits,
-              false_negative,
               do_nothing
               )
         permutation_order_q = {}
         # the order in the for is important because redefine the state as
-        # ket(0) detected_losses , ket(2) false negative, kept_qubits
-        for j, el in enumerate(replace_qubits + false_negative + do_nothing):
+        # ket(0) detected_losses , ket(2), kept_qubits
+        for j, el in enumerate(replace_qubits + do_nothing):
             permutation_order_q[el] = j
             # print("permutation_order_q", permutation_order_q)
 
@@ -330,14 +236,15 @@ for event in trial_list:
 
             # place where we can apply corrections but we don't
 
-            print(f"{index_stab_measurement: 4d}",
-                  configuration_int_X,
-                  configuration_int_Z,
-                  f"{np.prod(probability_each_measurement):1.4f}",
-                  f"{qu.expect(XL, state_after_measure):+1.4f}",
-                  f"{qu.expect(ZL, state_after_measure):+1.4f}",
-                  f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
-                  )
+            if VERBOSE:
+                print(f"{index_stab_measurement: 4d}",
+                      configuration_int_X,
+                      configuration_int_Z,
+                      f"{np.prod(probability_each_measurement):1.4f}",
+                      f"{qu.expect(XL, state_after_measure):+1.4f}",
+                      f"{qu.expect(ZL, state_after_measure):+1.4f}",
+                      f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
+                      )
 
             prob_stabilizers = np.prod(probability_each_measurement)
             cumulative_probability_stabilizers += prob_stabilizers
@@ -355,27 +262,30 @@ for event in trial_list:
             # conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
             index_stab_measurement += 1
 
-        print("cumulative_probability_stabilizers: ", cumulative_probability_stabilizers)
+        print("cumulative_probability_stabilizers: ",
+              f"{cumulative_probability_stabilizers:.4f}")
+        print("1-cumulative_probability_stabilizers: ",
+              f"{1-cumulative_probability_stabilizers:.4e}")
         print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
         conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-        conf_case_ancilla = int("".join(str(_) for _ in sub_case_ancilla))
         res = ([phi_tilde,
                 conf_loss,
-                conf_case_ancilla,
                 np.real(np.sum(average_value_each_stab_meas)),
                 np.real(prob_total_event)
                 ])
 
+    index_conf += 1
     final_p_loss.append(res)
     np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
                                                  '%07d\t' +
-                                                 '%07d\t' +
-                                                 '%.10e\t' +
-                                                 '%1.14f\t')
-    index_conf += 1
+                                                 '%.14e\t' +
+                                                 '%.14e\t')
 
-np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
-                                             '%07d\t' +
-                                             '%07d\t' +
-                                             '%.10e\t' +
-                                             '%1.14f\t')
+A = np.array(final_p_loss)
+prob_success = A[:, 2]
+prob_event = A[:, 3]
+print("sum(prob_event)", sum(prob_event))
+p_success = np.sum(prob_success * prob_event)
+print("p_success   ", f"{p_success:.4f}")
+print("log_err_rate", f"{1-p_success:.4e}")
+

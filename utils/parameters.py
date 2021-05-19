@@ -47,5 +47,9 @@ def parse_command_line():
                         help="Number of Monte Carlo samples"
                         )
 
+    parser.add_argument('--verbose',
+                        action="store_true",
+                        help="verbose"
+                        )
     args = parser.parse_args()
     return parser.parse_args()

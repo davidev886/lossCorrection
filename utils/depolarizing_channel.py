@@ -4,7 +4,7 @@ import qutip as qu
 
 L = 7
 
-def DepolQubit(i,p):  # Qubit Kraus-operators for depolarizing channel
+def DepolQubit(i, p):  # Qubit Kraus-operators for depolarizing channel
     dimHq = 3
     index = [
             np.sqrt(1 - 3 * p / 4) * qu.qeye(2),
@@ -31,19 +31,19 @@ def DepolQutrit(qutrit_n, i, p):  # Qutrit Kraus-operators for depolarizing chan
     temp = [qu.qeye(dimHq)] * qutrit_n + [index[i]] + [qu.qeye(dimHq)] * (L - qutrit_n - 1) + [qu.qeye(dimHa)]
 
     return qu.tensor(temp)
-    
-    
+
+
 def UnitaryQubitQutritQNDDepol(p, state_rho, qutrit_n): # depolarizing channel on ancilla qubit & system qutrit
     Depol = 0
     for i in range(4):
         for j in range(9):
-            Depol = (Depol + 
-                DepolQubit(i,p) * DepolQutrit(qutrit_n, j,p) * state_rho 
+            Depol = (Depol +
+                DepolQubit(i,p) * DepolQutrit(qutrit_n, j,p) * state_rho
                 * DepolQutrit(qutrit_n, j,p).dag() * DepolQubit(i,p).dag() )
 
     return Depol / np.trace(Depol.data.toarray())
-    
-    
+
+
 
 if __name__ == "__main__":
     print("c")
@@ -54,4 +54,3 @@ if __name__ == "__main__":
     state_rho = vacuum*vacuum.dag()
     for data_q in range(7):
         state_rho = UnitaryQubitQutritQNDDepol(p, state_rho, data_q)
-        

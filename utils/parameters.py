@@ -1,9 +1,4 @@
-
 import argparse
-
-
-
-
 
 # python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
 def parse_command_line():

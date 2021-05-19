@@ -12,7 +12,7 @@ import os
 # from utils.p_operators_qutrit import *
 from utils.p_operators import *
 from utils.binary_conf import create_random_event
-from utils.paramters import parse_command_line
+from utils.parameters import parse_command_line
 import datetime
 
 

@@ -2,6 +2,7 @@ import numpy as np
 import qutip as qu
 from utils.p_operators import *
 
+
 def inc_channel(prob, n_qubit):
     Xq = X[n_qubit]
     channel = (prob['1a'] * qu.spre(Id) * qu.spost(Id) +
@@ -10,6 +11,7 @@ def inc_channel(prob, n_qubit):
                prob['1d'] * qu.spre(Xa) * qu.spost(Xa)
                )
     return channel
+
 
 if __name__ == "__main__":
     print("c")

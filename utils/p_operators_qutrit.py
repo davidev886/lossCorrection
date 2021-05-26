@@ -24,6 +24,9 @@ _sigmas_P = [[[1, 0], [0, 1]],
 
 # ancilla always the last qubit
 L = 7
+# Hilbert space dimension data qubit / ancilla
+dimQ = 3
+dimA = 2
 
 Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
 

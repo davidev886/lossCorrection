@@ -3,7 +3,9 @@ import numpy as np
 
 # ancilla always the last qubit
 L = 7
+# Hilbert space dimension data qubit / ancilla
 dimQ = 2
+dimA = 2
 
 Id = qu.tensor([qu.qeye(dimQ)] * L + [qu.qeye(2)])
 

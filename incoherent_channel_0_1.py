@@ -88,6 +88,18 @@ file_data_name = os.path.join(folder_name,
                               final_data_name
                               )
 
+# get the incoherent channels once
+channels_0 = []
+channels_1 = []
+for data_q in range(L):
+    ch_0, ch_1 = inc_channel(basic_event_probs,
+                             data_q,
+                             noloss=False
+                             )
+    channels_0.append(ch_0)
+    channels_1.append(ch_1)
+
+
 print(f"logical state |{LogicalStates_str[jLog]}_L>")
 
 index_conf = 0
@@ -118,17 +130,18 @@ for outcomes_ancilla in all_events:
         # rho_L.tidyup(atol = 1e-8)
 
         # apply the effective incoherent noise model
-        channel_0, channel_1 = inc_channel(basic_event_probs,
-                              data_q,
-                              noloss=False
-                              )
+
         prob_outcome0 = (rho_L * Pp_ancilla).tr()
         prob_outcome1 = 1 - prob_outcome0
-
-        rho_L = (prob_outcome0 * channel_0(Pp_ancilla * rho_L * Pp_ancilla.dag()) +
-                 prob_outcome1 * channel_1(Pm_ancilla * rho_L * Pm_ancilla.dag())
+        ch_0 = channels_0[data_q]
+        ch_1 = channels_1[data_q]
+#          rho_L = (prob_outcome0 * channel_0(Pp_ancilla * rho_L * Pp_ancilla.dag()) +
+#                   prob_outcome1 * channel_1(Pm_ancilla * rho_L * Pm_ancilla.dag())
+#                   )
+        rho_L = (1 * ch_0(Pp_ancilla * rho_L * Pp_ancilla.dag()) +
+                 1 * ch_1(Pm_ancilla * rho_L * Pm_ancilla.dag())
                  )
-
+        print("rho_L.tr()" , rho_L.tr())
         if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
             prob_outcome = prob_outcome0
 

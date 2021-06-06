@@ -76,9 +76,17 @@ basic_event_probs = {'1a': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  
                      '1b': np.sin(eps)**2/4.,  # 1(b)
                      '1c': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
                      '1d': np.sin(eps)**2/4.,  # 1(d)
-                     '2a': np.cos(eps/2.)**2,  # 2(a)
-                     '2b': np.sin(eps/2.)**2,  # 2(b)
+                     '2b': np.cos(eps/2.)**2,  # 2(a)
+                     '2a': np.sin(eps/2.)**2,  # 2(b)
                      }
+# try with these probability inverted as from Mathematica notebook
+# original definition
+#  If the ancilla is found in 1 (loss detected) we
+# (a) leave the qutrit state (ρ = |2⟩ ⟨2|) as it is with probability np.cos(eps/2.)**2
+# (b) flip the ancilla to the no-loss detection state with probability np.sin(eps/2.)**2  (false negative).
+#                     '2a': np.cos(eps/2.)**2,  # 2(a)
+#                     '2b': np.sin(eps/2.)**2,  # 2(b)
+
 
 prob_loss = np.sin(phi / 2)**2 / 2
 

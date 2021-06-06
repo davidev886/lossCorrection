@@ -30,7 +30,7 @@ dimA = 2
 
 Id = qu.tensor([qu.qeye(3)] * L + [qu.qeye(2)])
 
-x_qutrit = qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+x_qutrit = qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
 
 y_qutrit = qu.Qobj([[0, -1j, 0], [1j, 0, 0], [0, 0, 0]])
 

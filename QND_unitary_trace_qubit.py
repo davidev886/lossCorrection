@@ -125,9 +125,10 @@ for outcomes_ancilla in all_events:
 
     probs_outcome = []
     probs_incoherent_process = []
-
+    print(outcomes_ancilla)
+    ancilla_after_channel = []
     for data_q in range(L):
-        print(data_q)
+#        print(data_q)
         # apply Rloss with an angle phi
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
         # apply the QND detection unit
@@ -140,37 +141,27 @@ for outcomes_ancilla in all_events:
 
         # apply the effective incoherent noise model
 
-        prob_outcome0 = (rho_L * Pp_ancilla).tr()
-        print("prob_outcome1", 1-prob_outcome0)
-        prob_outcome1 = 1 - prob_outcome0
+        Xq = X[data_q]
+#         rho_Lp = rho_L #Pp_ancilla * rho_L * Pp_ancilla.dag()
+#         rho_Lm = rho_L #Pm_ancilla * rho_L * Pm_ancilla.dag()
+#         channel_0 = (basic_event_probs['1a'] * Id * rho_Lp * Id +
+#                      basic_event_probs['1b'] * Xq * rho_Lp  * Xq +
+#                      basic_event_probs['1c'] * Xq * Xa * rho_Lp * Xq * Xa +
+#                      basic_event_probs['1d'] * Xa * rho_Lp * Xa
+#                      )
+#
+#         channel_1 = (basic_event_probs['2a'] * Id * rho_Lm * Id +
+#                      basic_event_probs['2b'] * Xa * rho_Lm * Xa
+#                      )
+#        print("prob 0 on channel 0", data_q, (channel_0 * Pp_ancilla).tr())
+#        print("prob 1 on channel 1", data_q, (channel_1 * Pp_ancilla).tr())
 
-        if 0:
-            Xq = X[data_q]
-            rho_Lp = Pp_ancilla * rho_L * Pp_ancilla.dag()
-            print("rho_Lp.tr()" , rho_Lp.tr())
-            rho_Lm = Pm_ancilla * rho_L * Pm_ancilla.dag()
-            print("rho_Lm.tr()" , rho_Lm.tr())
-            channel_0 = (basic_event_probs['1a'] * Id * rho_Lp * Id +
-                         basic_event_probs['1b'] * Xq * rho_Lp  * Xq +
-                         basic_event_probs['1c'] * Xq * Xa * rho_Lp * Xq * Xa +
-                         basic_event_probs['1d'] * Xa * rho_Lp * Xa
-                         )
 
-            channel_1 = (basic_event_probs['2a'] * Id * rho_Lm * Id +
-                         basic_event_probs['2b'] * Xa * rho_Lm * Xa
-                         )
-
-    #          rho_L = (prob_outcome0 * channel_0(Pp_ancilla * rho_L * Pp_ancilla.dag()) +
-    #                   prob_outcome1 * channel_1(Pm_ancilla * rho_L * Pm_ancilla.dag())
-    #                   )
-            print("channel_1.tr()", channel_1.tr())
-            rho_L = channel_0 + channel_1
-            print("rho_L.tr()" , rho_L.tr())
-        if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
-            prob_outcome = prob_outcome0
-
+        if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state before the channel
+            prob_outcome = (rho_L * Pp_ancilla).tr()
+            probs_outcome.append(prob_outcome)
             if abs(prob_outcome.imag) > 1e-5:
-                print("warning: im prob_outcome = {prob_outcome}")
+                print("warning: in prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
                 # the state cannot be projected
                 # in the +1 eigenstate of the ancilla
@@ -178,29 +169,48 @@ for outcomes_ancilla in all_events:
                 print("check null state")
                 break  # exit()
 
-            # rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
-            do_nothing.append(data_q)
-
+#            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
+            print("prob_outcome 0" , prob_outcome)
+            rho_L = (basic_event_probs['1a'] * Id * rho_L * Id +
+                     basic_event_probs['1b'] * Xq * rho_L  * Xq +
+                     basic_event_probs['1c'] * Xq * Xa * rho_L * Xq * Xa +
+                     basic_event_probs['1d'] * Xa * rho_L * Xa
+                     )
+            print("prob 0 on channel 0 rho", data_q, (rho_L * Pp_ancilla).tr())
+            print("prob 1 on channel 0 rho", data_q, (rho_L * Pm_ancilla).tr())
+            ancilla_final = np.random.binomial(1, 1 - (rho_L * Pp_ancilla).tr())
+            if ancilla_final == 0:
+                do_nothing.append(data_q)
+            elif ancilla_final == 1:
+                replace_qubits.append(data_q)
+            ancilla_after_channel.append(ancilla_final)
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
-            prob_outcome = 1 - prob_outcome0
-
+            prob_outcome = (rho_L * Pm_ancilla).tr()
+            probs_outcome.append(prob_outcome)
             if abs(prob_outcome.imag) > 1e-5:
-                print("warning: im prob_outcome = {prob_outcome}")
+                print("warning: in prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
                 # the state cannot be projected
                 # in the +1 eigenstate of the ancilla
                 null_state = True
-                print("check null state")
+                print("check null state outcome 1", prob_outcome)
                 break  # exit()
             # print("before 0 Pm_ancilla rho_L.tr()" , rho_L.tr(), prob_outcome)
             # rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
-            # print("1 Pm_ancilla rho_L.tr()" , rho_L.tr())
+            print("prob_outcome 1" , prob_outcome)
             replace_qubits.append(data_q)
-            # rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
-            # print("2 Pm_ancilla rho_L.tr()" , rho_L.tr())
-
-        w_0 = rho_L.ptrace(range(L))
-        rho_L = qu.tensor([w_0] + [qu.fock_dm(dimA, 0)])
+            rho_L = (basic_event_probs['2a'] * Id * rho_L * Id +
+                     basic_event_probs['2b'] * Xa * rho_L * Xa
+                     )
+            print("prob 0 on channel 1 rho", data_q, (rho_L * Pp_ancilla).tr())
+            print("prob 1 on channel 1 rho", data_q, (rho_L * Pm_ancilla).tr())
+            ancilla_final = np.random.binomial(1, 1 - (rho_L * Pp_ancilla).tr())
+            if ancilla_final == 0:
+                do_nothing.append(data_q)
+            elif ancilla_final == 1:
+                replace_qubits.append(data_q)
+            ancilla_after_channel.append(ancilla_final)
+            rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
 
         # renormalize if the trace of rho_L is bigger than 1
         # because of accumulated errorr
@@ -208,17 +218,11 @@ for outcomes_ancilla in all_events:
         if traccia > 1:
             rho_L = rho_L / traccia
 
-        probs_outcome.append(prob_outcome)
+    print("ancilla_final", ancilla_after_channel)
 
     prob_total_event = np.prod(probs_outcome)
     cumulative_probability += prob_total_event
     print("probs_outcome", np.array(probs_outcome))
-    print(index_conf, outcomes_ancilla,
-          do_nothing,
-          replace_qubits,
-          f"{prob_total_event:.4}",
-          f"{1-cumulative_probability:.4e}"
-          )
 
     if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
         correction_successful = 0.0
@@ -229,8 +233,16 @@ for outcomes_ancilla in all_events:
                 correction_successful,
                 np.real(prob_total_event)
                 ])
+        print(index_conf, outcomes_ancilla,
+              "null_state"
+              )
     else:
-
+        print(index_conf, outcomes_ancilla,
+              do_nothing,
+              replace_qubits,
+              f"{prob_total_event:.4}",
+              f"{1-cumulative_probability:.4e}"
+              )
         w_0 = rho_L.ptrace(do_nothing)
         rho_L = qu.tensor([qu.fock_dm(dimQ, 0)] * len(replace_qubits)
                            + [w_0]
@@ -339,14 +351,15 @@ for outcomes_ancilla in all_events:
     final_p_loss.append(res)
     np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
                                                  '%07d\t' +
-                                                 '%.14e\t' +
-                                                 '%.14e\t')
+                                                 '%.18e\t' +
+                                                 '%.18e\t')
 
-A = np.array(final_p_loss)
-prob_success = A[:, 2]
-prob_event = A[:, 3]
-print("sum(prob_event)", sum(prob_event))
-p_success = np.sum(prob_success * prob_event)
-print("p_success   ", f"{p_success:.4f}")
-print("log_err_rate", f"{1-p_success:.4e}")
 
+# A = np.array(final_p_loss)
+# prob_success = A[:, 2]
+# prob_event = A[:, 3]
+# print("sum(prob_event)", sum(prob_event))
+# p_success = np.sum(prob_success * prob_event)
+# print("p_success   ", f"{p_success:.4f}")
+# print("log_err_rate", f"{1-p_success:.4e}")
+#

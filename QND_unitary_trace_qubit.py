@@ -168,8 +168,9 @@ for outcomes_ancilla in all_events:
                 print("check null state")
                 break  # exit()
 
-#            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
+            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
             print("prob_outcome 0" , prob_outcome)
+           # rho_Lp = Pp_ancilla * rho_L * Pp_ancilla.dag()
             rho_L = (basic_event_probs['1a'] * Id * rho_L * Id +
                      basic_event_probs['1b'] * Xq * rho_L  * Xq +
                      basic_event_probs['1c'] * Xq * Xa * rho_L * Xq * Xa +
@@ -186,6 +187,7 @@ for outcomes_ancilla in all_events:
 
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
             prob_outcome = (rho_L * Pm_ancilla).tr()
+#            rho_Lm = Pm_ancilla * rho_L * Pm_ancilla.dag()
             probs_outcome.append(prob_outcome)
             if abs(prob_outcome.imag) > 1e-5:
                 print("warning: in prob_outcome = {prob_outcome}")
@@ -196,7 +198,7 @@ for outcomes_ancilla in all_events:
                 print("check null state outcome 1", prob_outcome)
                 break  # exit()
             # print("before 0 Pm_ancilla rho_L.tr()" , rho_L.tr(), prob_outcome)
-            # rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
+            rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
             print("prob_outcome 1" , prob_outcome)
             replace_qubits.append(data_q)
             rho_L = (basic_event_probs['2a'] * Id * rho_L * Id +

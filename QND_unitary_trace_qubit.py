@@ -166,6 +166,7 @@ for outcomes_ancilla in all_events:
                 # in the +1 eigenstate of the ancilla
                 null_state = True
                 print("check null state")
+                ancilla_after_channel = [2] * L
                 break  # exit()
 
             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
@@ -201,8 +202,9 @@ for outcomes_ancilla in all_events:
                 # in the +1 eigenstate of the ancilla
                 null_state = True
                 print("check null state outcome 1", prob_outcome)
+                ancilla_after_channel = [2] * L
                 break  # exit()
-            # print("before 0 Pm_ancilla rho_L.tr()" , rho_L.tr(), prob_outcome)
+
             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
             print("prob_outcome 1" , prob_outcome)
             replace_qubits.append(data_q)

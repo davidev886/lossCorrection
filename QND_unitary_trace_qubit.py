@@ -178,7 +178,12 @@ for outcomes_ancilla in all_events:
                      )
             print("prob 0 on channel 0 rho", data_q, (rho_L * Pp_ancilla).tr())
             print("prob 1 on channel 0 rho", data_q, (rho_L * Pm_ancilla).tr())
-            ancilla_final = np.random.binomial(1, 1 - (rho_L * Pp_ancilla).tr())
+            prob_coin_toss = 1 - (rho_L * Pp_ancilla).tr()
+            if prob_coin_toss > 1:
+                prob_coin_toss = 1
+            if prob_coin_toss < 0:
+                prob_coin_toss = 0
+            ancilla_final = np.random.binomial(1, prob_coin_toss)
             ancilla_after_channel.append(ancilla_final)
 #             if ancilla_final == 0:
 #                 do_nothing.append(data_q)
@@ -206,7 +211,12 @@ for outcomes_ancilla in all_events:
                      )
             print("prob 0 on channel 1 rho", data_q, (rho_L * Pp_ancilla).tr())
             print("prob 1 on channel 1 rho", data_q, (rho_L * Pm_ancilla).tr())
-            ancilla_final = np.random.binomial(1, 1 - (rho_L * Pp_ancilla).tr())
+            prob_coin_toss = 1 - (rho_L * Pp_ancilla).tr()
+            if prob_coin_toss > 1:
+                prob_coin_toss = 1
+            if prob_coin_toss < 0:
+                prob_coin_toss = 0
+            ancilla_final = np.random.binomial(1, prob_coin_toss)
             ancilla_after_channel.append(ancilla_final)
 #             if ancilla_final == 0:
 #                 do_nothing.append(data_q)

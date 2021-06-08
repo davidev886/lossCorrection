@@ -9,21 +9,20 @@ chi=0
 #for overrot2 in 0.00 0.034 0.017  0.0680 0.0785196 0.0961665 0.136 # 0.4300697618 #0 #0.136 0.4300697618
 #do
 
-for overrot1 in 0.00 #$(seq -f "%1.5f" 0.000 0.00400 0.0141421)
+for overrot1 in 0.00000 #$(seq -f "%1.5f" 0.000 0.00400 0.0141421)
 do
-for overrot2 in 0.0016 #$(seq -f "%1.5f" 0.000 0.0400 0.16) 0.136
+for overrot2 in 0.00000 #$(seq -f "%1.5f" 0.000 0.0400 0.16) 0.136
 do
 
-   folder=$(printf "case_2_zero_loss_commented/chi_%.01e_eps_%1.3f_p2_%1.5f_p1_%1.5f" $chi $eps ${overrot2} ${overrot1})
-   echo ${overrot1}, ${overrot2}, ${folder}
-   mkdir -p  $folder
-   i=0
-    c=0.05
-    state=0
+    folder=$(printf "case_2_zero_loss_commented/chi_%.01e_eps_%1.3f_p2_%1.5f_p1_%1.5f" $chi $eps ${overrot2} ${overrot1})
+    echo ${overrot1}, ${overrot2}, ${folder}
+    mkdir -p  $folder
+    i=0
+    c=0.00
     for state in 2
     do
     echo $overrot1 $overrot2  $state
-    python QND_unitary_trace_qubit.py \
+    python qec_incoherent_channel.py \
         --logical_state ${state}  \
         --phi_tilde ${c}  \
         --epsilon_choi ${eps} \

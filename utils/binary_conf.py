@@ -14,6 +14,23 @@ class binary_raw_configurations(object):
         self.configurations = configurations
 
 
+def get_binary_confs(n):
+    configurations = {}
+    for i in range(2**n):
+        configuration_str = bin(i)[2:].zfill(n)
+        configuration_int = [int(_) for _ in configuration_str]
+        num_particles = sum(configuration_int)
+        if num_particles in configurations:
+            configurations[num_particles].append(configuration_int)
+        else:
+            configurations[num_particles] = [configuration_int]
+
+    configurations_list = []
+    for j in range(n + 1):
+        configurations_list.extend(configurations[j])
+
+    return configurations_list
+
 class binary_configurations(object):
     def __init__(self, n=7):
         self.n = n

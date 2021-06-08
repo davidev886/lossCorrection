@@ -113,7 +113,6 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 print(basic_event_probs)
 index_conf = 0
 cumulative_probability = 0
-
 for outcomes_ancilla in all_events:
 
     psiL = LogicalStates[jLog]
@@ -179,11 +178,12 @@ for outcomes_ancilla in all_events:
             print("prob 0 on channel 0 rho", data_q, (rho_L * Pp_ancilla).tr())
             print("prob 1 on channel 0 rho", data_q, (rho_L * Pm_ancilla).tr())
             ancilla_final = np.random.binomial(1, 1 - (rho_L * Pp_ancilla).tr())
-            if ancilla_final == 0:
-                do_nothing.append(data_q)
-            elif ancilla_final == 1:
-                replace_qubits.append(data_q)
             ancilla_after_channel.append(ancilla_final)
+#             if ancilla_final == 0:
+#                 do_nothing.append(data_q)
+#             elif ancilla_final == 1:
+#                 replace_qubits.append(data_q)
+
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
             prob_outcome = (rho_L * Pm_ancilla).tr()
             probs_outcome.append(prob_outcome)
@@ -205,11 +205,11 @@ for outcomes_ancilla in all_events:
             print("prob 0 on channel 1 rho", data_q, (rho_L * Pp_ancilla).tr())
             print("prob 1 on channel 1 rho", data_q, (rho_L * Pm_ancilla).tr())
             ancilla_final = np.random.binomial(1, 1 - (rho_L * Pp_ancilla).tr())
-            if ancilla_final == 0:
-                do_nothing.append(data_q)
-            elif ancilla_final == 1:
-                replace_qubits.append(data_q)
             ancilla_after_channel.append(ancilla_final)
+#             if ancilla_final == 0:
+#                 do_nothing.append(data_q)
+#             elif ancilla_final == 1:
+#                 replace_qubits.append(data_q)
             rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
 
 
@@ -220,7 +220,11 @@ for outcomes_ancilla in all_events:
             rho_L = rho_L / traccia
 
     print("ancilla_final", ancilla_after_channel)
-
+    ancilla_after_channel_arr = np.array(ancilla_after_channel)
+    replace_qubits = np.where(ancilla_after_channel_arr == 1)[0].tolist()
+    do_nothing = np.where(ancilla_after_channel_arr == 0)[0].tolist()
+    print("replace_qubits", replace_qubits)
+    print("do_nothing", do_nothing)
     prob_total_event = np.prod(probs_outcome)
     cumulative_probability += prob_total_event
     print("probs_outcome", np.array(probs_outcome))
@@ -229,10 +233,12 @@ for outcomes_ancilla in all_events:
         correction_successful = 0.0
 
         conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        conf_ancilla = int("".join(str(_) for _ in ancilla_after_channel))
         res = ([phi_tilde,
                 conf_loss,
                 correction_successful,
-                np.real(prob_total_event)
+                np.real(prob_total_event),
+                conf_ancilla
                 ])
         print(index_conf, outcomes_ancilla,
               "null_state"
@@ -342,10 +348,12 @@ for outcomes_ancilla in all_events:
               f"{1-cumulative_probability_stabilizers:.4e}")
         print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
         conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        conf_ancilla = int("".join(str(_) for _ in ancilla_after_channel))
         res = ([phi_tilde,
                 conf_loss,
                 np.real(np.sum(average_value_each_stab_meas)),
-                np.real(prob_total_event)
+                np.real(prob_total_event),
+                conf_ancilla
                 ])
 
     index_conf += 1
@@ -353,7 +361,8 @@ for outcomes_ancilla in all_events:
     np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
                                                  '%07d\t' +
                                                  '%.18e\t' +
-                                                 '%.18e\t')
+                                                 '%.18e\t' +
+                                                 '%07d\t')
 
 
 # A = np.array(final_p_loss)

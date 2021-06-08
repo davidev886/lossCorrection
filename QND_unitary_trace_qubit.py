@@ -77,8 +77,8 @@ basic_event_probs = {'1a': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  
                      '1b': np.sin(eps)**2/4.,  # 1(b)
                      '1c': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
                      '1d': np.sin(eps)**2/4.,  # 1(d)
-                     '2b': np.cos(eps/2.)**2,  # 2(a)
-                     '2a': np.sin(eps/2.)**2,  # 2(b)
+                     '2a': np.cos(eps/2.)**2,  # 2(a)
+                     '2b': np.sin(eps/2.)**2,  # 2(b)
                      }
 # try with these probability inverted as from Mathematica notebook
 # original definition
@@ -211,6 +211,7 @@ for outcomes_ancilla in all_events:
                 replace_qubits.append(data_q)
             ancilla_after_channel.append(ancilla_final)
             rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
+
 
         # renormalize if the trace of rho_L is bigger than 1
         # because of accumulated errorr

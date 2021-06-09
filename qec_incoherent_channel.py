@@ -69,18 +69,18 @@ final_data_name = (now.strftime("%Y%m%d%H%M") +
                    )
 
 channel_probs = {'1a': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(a)
-                     '1b': np.sin(eps)**2/4.,  # 1(b)
-                     '1c': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
-                     '1d': np.sin(eps)**2/4.,  # 1(d)
-                     '2a': np.cos(eps/2.)**2,  # 2(a)
-                     '2b': np.sin(eps/2.)**2,  # 2(b)
-                     }
+                 '1b': np.sin(eps)**2/4.,  # 1(b)
+                 '1c': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
+                 '1d': np.sin(eps)**2/4.,  # 1(d)
+                 '2a': np.cos(eps/2.)**2,  # 2(a)
+                 '2b': np.sin(eps/2.)**2,  # 2(b)
+                 }
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
 all_ancilla_outcomes = get_binary_confs(L) #
 
-all_channel_events = product([0, 1], repeat=L)
+all_channel_events = get_binary_confs(L)
 
 file_data_name = os.path.join(folder_name,
                               final_data_name
@@ -107,7 +107,7 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
 
     probs_outcome = []
     probs_incoherent_process = []
-    ancilla_after_channel = []
+
     for data_q in range(L):
         # apply Rloss with an angle phi
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
@@ -140,7 +140,7 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                 # in the +1 eigenstate of the ancilla
                 null_state = True
                 print("check null state outcome 0", prob_outcome)
-                ancilla_after_channel = [2] * L
+                probs_outcome.append(prob_outcome)
                 break  # exit()
             probs_outcome.append(prob_outcome)
             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
@@ -155,7 +155,8 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                 # in the +1 eigenstate of the ancilla
                 null_state = True
                 print("check null state outcome 1", prob_outcome)
-                ancilla_after_channel = [2] * L
+                probs_outcome.append(prob_outcome)
+                rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
                 break  # exit()
             probs_outcome.append(prob_outcome)
             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
@@ -185,7 +186,7 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                 conf_ancilla,
                 p_tot_channel,
                 p_tot_ancilla,
-                correction_successful
+                p_log_success
                 ])
 
         print(index_conf,

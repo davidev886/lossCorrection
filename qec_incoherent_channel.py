@@ -92,6 +92,9 @@ index_conf = 0
 cumulative_probability = 0
 #all_channel_events = [[0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0]]
 
+if phi_tilde == 0:
+    all_channel_events = [[0, 0, 0, 0, 0, 0, 0]]
+
 for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_outcomes):
     print(channel_event, outcomes_ancilla )
 

@@ -1,7 +1,5 @@
 #
 # Case 2: incoherent model for the overrotations
-# with no loss rotations
-# run on the first most probable events
 #
 
 import qutip as qu
@@ -15,9 +13,6 @@ from utils.binary_conf import get_binary_confs
 from utils.incoherent_channel_qutrit import (channel_E_0, channel_E_1)
 from utils.parameters import parse_command_line
 import datetime
-
-
-import glob
 
 np.set_printoptions(precision=4, suppress=True)
 
@@ -113,22 +108,21 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
     for data_q in range(L):
         # apply Rloss with an angle phi
         rho_L = rotation_ops[data_q] * rho_L * rotation_ops[data_q].dag()
-        # apply the QND detection unit
+        # applying the QND detection unit
         rho_L = apply_qnd_process_unit(chi_matrix,
                              rho_L,
                              data_q,
                              chi_threshold
                              )
         # rho_L.tidyup(atol = 1e-8)
+        # applying the incoherent channel
         if channel_event[data_q] == 0:
             prob_outcome_ch_ev = (rho_L * Pp_ancilla).tr()
-#            print(f"{data_q}, {prob_outcome_ch_ev:1.4f}")
             probs_incoherent_process.append(prob_outcome_ch_ev)
             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome_ch_ev
             rho_L = channel_E_0(rho_L, channel_probs, data_q)
         elif channel_event[data_q] == 1:
             prob_outcome_ch_ev = (rho_L * Pm_ancilla).tr()
-#            print(f"{data_q}, {prob_outcome_ch_ev:1.4f}")
             probs_incoherent_process.append(prob_outcome_ch_ev)
             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome_ch_ev
             rho_L = channel_E_1(rho_L, channel_probs, data_q)
@@ -142,12 +136,11 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                 # the state cannot be projected
                 # in the +1 eigenstate of the ancilla
                 null_state = True
-                print("check null state")
+                print("check null state outcome 0", prob_outcome)
                 ancilla_after_channel = [2] * L
                 break  # exit()
             probs_outcome.append(prob_outcome)
             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
-#            print(f"prob_outcome 0 {prob_outcome:1.4f}")
             do_nothing.append(data_q)
 
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
@@ -158,79 +151,53 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                 # the state cannot be projected
                 # in the +1 eigenstate of the ancilla
                 null_state = True
-#                print("check null state outcome 1", prob_outcome)
+                print("check null state outcome 1", prob_outcome)
                 ancilla_after_channel = [2] * L
                 break  # exit()
             probs_outcome.append(prob_outcome)
             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
-#            print(f"prob_outcome 1 {prob_outcome:1.4f}")
             replace_qubits.append(data_q)
-
             rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
 
         print(f"{data_q}, {prob_outcome_ch_ev:1.4f}, {prob_outcome:1.4f}")
+        # renormalize if the trace of rho_L is bigger than 1
+        # because of accumulated errors
+        traccia = rho_L.tr()
+        if traccia > 1:
+            rho_L = rho_L / traccia
 
     p_tot_ancilla = np.real(np.prod(probs_outcome))
     p_tot_channel = np.real(np.prod(probs_incoherent_process))
     cumulative_probability += p_tot_ancilla * p_tot_channel
     print("---->cumulative", f"{1-cumulative_probability:.5e}")
+    print("---->tr(rho)", f"{rho_L.tr():.6f}")
     conf_channel = int("".join(str(_) for _ in channel_event))
     conf_ancilla = int("".join(str(_) for _ in outcomes_ancilla))
 
-    res = ([phi_tilde,
+    if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
+        p_log_success = 0.0
+
+        res = ([phi_tilde,
                 conf_channel,
                 conf_ancilla,
                 p_tot_channel,
                 p_tot_ancilla,
+                correction_successful
                 ])
 
-    index_conf += 1
-    final_p_loss.append(res)
-    np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
-                                                 '%07d\t' +
-                                                 '%07d\t' +
-                                                 '%.18e\t' +
-                                                 '%.18e\t')
-
-exit()
-if 0:
-    if 0:
-
-        # renormalize if the trace of rho_L is bigger than 1
-        # because of accumulated errorr
-        traccia = rho_L.tr()
-        if traccia > 1:
-            rho_L = rho_L / traccia
-
-    print("ancilla_final", ancilla_after_channel)
-    ancilla_after_channel_arr = np.array(ancilla_after_channel)
-    replace_qubits = np.where(ancilla_after_channel_arr == 1)[0].tolist()
-    do_nothing = np.where(ancilla_after_channel_arr == 0)[0].tolist()
-    print("replace_qubits", replace_qubits)
-    print("do_nothing", do_nothing)
-    prob_total_event = np.prod(probs_outcome)
-    cumulative_probability += prob_total_event
-    print("probs_outcome", np.array(probs_outcome))
-
-    if sum(outcomes_ancilla) >= 7 or null_state or len(do_nothing) == 0:
-        correction_successful = 0.0
-
-        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-        conf_ancilla = int("".join(str(_) for _ in ancilla_after_channel))
-        res = ([phi_tilde,
-                conf_loss,
-                correction_successful,
-                np.real(prob_total_event),
-                conf_ancilla
-                ])
-        print(index_conf, outcomes_ancilla,
+        print(index_conf,
+              channel_event,
+              outcomes_ancilla,
               "null_state"
               )
     else:
-        print(index_conf, outcomes_ancilla,
+        print(index_conf,
+              channel_event,
+              outcomes_ancilla,
               do_nothing,
               replace_qubits,
-              f"{prob_total_event:.4}",
+              f"{p_tot_channel:.4}",
+              f"{p_tot_ancilla:.4}",
               f"{1-cumulative_probability:.4e}"
               )
         w_0 = rho_L.ptrace(do_nothing)
@@ -238,9 +205,6 @@ if 0:
                            + [w_0]
                            + [qu.fock_dm(dimA, 0)])
 
-        print(replace_qubits,
-              do_nothing
-              )
         permutation_order_q = {}
         # the order in the for is important because redefine the state as
         # ket(0) detected_losses , ket(2), kept_qubits
@@ -325,27 +289,30 @@ if 0:
             # conf_stab_meas = int("".join(str(_) for _ in configuration_int_X + configuration_int_Z))
             index_stab_measurement += 1
 
+        p_log_success = np.sum(average_value_each_stab_meas)
+
         print("cumulative_probability_stabilizers: ",
               f"{cumulative_probability_stabilizers:.4f}")
         print("1-cumulative_probability_stabilizers: ",
               f"{1-cumulative_probability_stabilizers:.4e}")
-        print("prob_of_succ_correction", np.sum(average_value_each_stab_meas))
-        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
-        conf_ancilla = int("".join(str(_) for _ in ancilla_after_channel))
+        print(f"prob_of_succ_correction {p_log_success:1.5f}")
+
         res = ([phi_tilde,
-                conf_loss,
-                np.real(np.sum(average_value_each_stab_meas)),
-                np.real(prob_total_event),
-                conf_ancilla
+                conf_channel,
+                conf_ancilla,
+                p_tot_channel,
+                p_tot_ancilla,
+                p_log_success
                 ])
 
     index_conf += 1
     final_p_loss.append(res)
     np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
                                                  '%07d\t' +
+                                                 '%07d\t' +
                                                  '%.18e\t' +
                                                  '%.18e\t' +
-                                                 '%07d\t')
+                                                 '%.18e\t')
 
 
 # A = np.array(final_p_loss)

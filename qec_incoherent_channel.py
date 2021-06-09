@@ -95,7 +95,7 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 print(channel_probs)
 index_conf = 0
 cumulative_probability = 0
-all_channel_events = [[1, 0, 0, 0, 0, 0, 0]]
+# all_channel_events = [[0, 0, 0, 0, 0, 0, 0]]
 
 for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_outcomes):
     print(channel_event, outcomes_ancilla )
@@ -120,26 +120,20 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                              chi_threshold
                              )
         # rho_L.tidyup(atol = 1e-8)
-
         if channel_event[data_q] == 0:
-            prob_outcome = (rho_L * Pp_ancilla).tr()
-            print(data_q, prob_outcome)
-            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
+            prob_outcome_ch_ev = (rho_L * Pp_ancilla).tr()
+#            print(f"{data_q}, {prob_outcome_ch_ev:1.4f}")
+            rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome_ch_ev
             rho_L = channel_E_0(rho_L, channel_probs, data_q)
         elif channel_event[data_q] == 1:
-            prob_outcome = (rho_L * Pm_ancilla).tr()
-            print(data_q, prob_outcome)
-            rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
+            prob_outcome_ch_ev = (rho_L * Pm_ancilla).tr()
+#            print(f"{data_q}, {prob_outcome_ch_ev:1.4f}")
+            rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome_ch_ev
             rho_L = channel_E_1(rho_L, channel_probs, data_q)
 
-
-
-exit()
-if 0:
-    if 0:
-        if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state before the channel
+        # measuring the ancilla
+        if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
             prob_outcome = (rho_L * Pp_ancilla).tr()
-            probs_outcome.append(prob_outcome)
             if abs(prob_outcome.imag) > 1e-5:
                 print("warning: in prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
@@ -148,61 +142,56 @@ if 0:
                 null_state = True
                 print("check null state")
                 ancilla_after_channel = [2] * L
- #               break  # exit()
-
+                break  # exit()
+            probs_outcome.append(prob_outcome)
             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome
-            print("prob_outcome 0" , prob_outcome)
-           # rho_Lp = Pp_ancilla * rho_L * Pp_ancilla.dag()
-
-            print("prob 0 on channel 0 rho", data_q, (rho_L * Pp_ancilla).tr())
-            print("prob 1 on channel 0 rho", data_q, (rho_L * Pm_ancilla).tr())
-            prob_coin_toss = 1 - (rho_L * Pp_ancilla).tr()
-            if prob_coin_toss > 1:
-                prob_coin_toss = 1
-            if prob_coin_toss < 0:
-                prob_coin_toss = 0
-            ancilla_final = np.random.binomial(1, prob_coin_toss)
-            ancilla_after_channel.append(ancilla_final)
-#             if ancilla_final == 0:
-#                 do_nothing.append(data_q)
-#             elif ancilla_final == 1:
-#                 replace_qubits.append(data_q)
+#            print(f"prob_outcome 0 {prob_outcome:1.4f}")
+            do_nothing.append(data_q)
 
         elif outcomes_ancilla[data_q] == 1:  # ancilla in 1 state
             prob_outcome = (rho_L * Pm_ancilla).tr()
-#            rho_Lm = Pm_ancilla * rho_L * Pm_ancilla.dag()
-            probs_outcome.append(prob_outcome)
             if abs(prob_outcome.imag) > 1e-5:
                 print("warning: in prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
                 # the state cannot be projected
                 # in the +1 eigenstate of the ancilla
                 null_state = True
-                print("check null state outcome 1", prob_outcome)
+#                print("check null state outcome 1", prob_outcome)
                 ancilla_after_channel = [2] * L
-#                break  # exit()
-
+                break  # exit()
+            probs_outcome.append(prob_outcome)
             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome
-            print("prob_outcome 1" , prob_outcome)
+#            print(f"prob_outcome 1 {prob_outcome:1.4f}")
             replace_qubits.append(data_q)
-            rho_L = (basic_event_probs['2a'] * Id * rho_L * Id +
-                     basic_event_probs['2b'] * Xa * rho_L * Xa
-                     )
-            print("prob 0 on channel 1 rho", data_q, (rho_L * Pp_ancilla).tr())
-            print("prob 1 on channel 1 rho", data_q, (rho_L * Pm_ancilla).tr())
-            prob_coin_toss = 1 - (rho_L * Pp_ancilla).tr()
-            if prob_coin_toss > 1:
-                prob_coin_toss = 1
-            if prob_coin_toss < 0:
-                prob_coin_toss = 0
-            ancilla_final = np.random.binomial(1, prob_coin_toss)
-            ancilla_after_channel.append(ancilla_final)
-#             if ancilla_final == 0:
-#                 do_nothing.append(data_q)
-#             elif ancilla_final == 1:
-#                 replace_qubits.append(data_q)
+
             rho_L = Xa * rho_L * Xa.dag()  # reinitializing ancilla
 
+        print(f"{data_q}, {prob_outcome_ch_ev:1.4f}, {prob_outcome:1.4f}")
+
+    prob_total_event = np.prod(probs_outcome)
+    cumulative_probability += prob_total_event
+
+    conf_event = int("".join(str(_) for _ in channel_event))
+    conf_ancilla = int("".join(str(_) for _ in outcomes_ancilla))
+
+    res = ([phi_tilde,
+                conf_event,
+                conf_ancilla,
+                prob_outcome_ch_ev,
+                np.real(prob_total_event),
+                ])
+
+    index_conf += 1
+    final_p_loss.append(res)
+    np.savetxt(file_data_name, final_p_loss, fmt='%1.5f\t' +
+                                                 '%07d\t' +
+                                                 '%07d\t' +
+                                                 '%.18e\t' +
+                                                 '%.18e\t')
+
+exit()
+if 0:
+    if 0:
 
         # renormalize if the trace of rho_L is bigger than 1
         # because of accumulated errorr

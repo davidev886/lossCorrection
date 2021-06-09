@@ -95,7 +95,7 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 print(channel_probs)
 index_conf = 0
 cumulative_probability = 0
-# all_channel_events = [[0, 0, 0, 0, 0, 0, 0]]
+#all_channel_events = [[0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0]]
 
 for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_outcomes):
     print(channel_event, outcomes_ancilla )
@@ -123,11 +123,13 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
         if channel_event[data_q] == 0:
             prob_outcome_ch_ev = (rho_L * Pp_ancilla).tr()
 #            print(f"{data_q}, {prob_outcome_ch_ev:1.4f}")
+            probs_incoherent_process.append(prob_outcome_ch_ev)
             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome_ch_ev
             rho_L = channel_E_0(rho_L, channel_probs, data_q)
         elif channel_event[data_q] == 1:
             prob_outcome_ch_ev = (rho_L * Pm_ancilla).tr()
 #            print(f"{data_q}, {prob_outcome_ch_ev:1.4f}")
+            probs_incoherent_process.append(prob_outcome_ch_ev)
             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome_ch_ev
             rho_L = channel_E_1(rho_L, channel_probs, data_q)
 
@@ -168,17 +170,18 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
 
         print(f"{data_q}, {prob_outcome_ch_ev:1.4f}, {prob_outcome:1.4f}")
 
-    prob_total_event = np.prod(probs_outcome)
-    cumulative_probability += prob_total_event
-
-    conf_event = int("".join(str(_) for _ in channel_event))
+    p_tot_ancilla = np.real(np.prod(probs_outcome))
+    p_tot_channel = np.real(np.prod(probs_incoherent_process))
+    cumulative_probability += p_tot_ancilla * p_tot_channel
+    print("---->cumulative", f"{1-cumulative_probability:.5e}")
+    conf_channel = int("".join(str(_) for _ in channel_event))
     conf_ancilla = int("".join(str(_) for _ in outcomes_ancilla))
 
     res = ([phi_tilde,
-                conf_event,
+                conf_channel,
                 conf_ancilla,
-                prob_outcome_ch_ev,
-                np.real(prob_total_event),
+                p_tot_channel,
+                p_tot_ancilla,
                 ])
 
     index_conf += 1

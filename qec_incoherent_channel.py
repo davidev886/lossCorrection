@@ -92,7 +92,8 @@ print(f"logical state |{LogicalStates_str[jLog]}_L>")
 print(channel_probs)
 index_conf = 0
 cumulative_probability = 0
-#all_channel_events = [[0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0]]
+
+all_channel_events = [[0, 1, 1, 0, 0, 1, 0], [1, 0, 0, 0, 0, 0, 0]]
 
 if phi_tilde == 0:
     all_channel_events = [[0, 0, 0, 0, 0, 0, 0]]
@@ -265,16 +266,6 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
 
             # place where we can apply corrections but we don't
 
-            if VERBOSE:
-                print(f"{index_stab_measurement: 4d}",
-                      configuration_int_X,
-                      configuration_int_Z,
-                      f"{np.prod(probability_each_measurement):1.4f}",
-                      f"{qu.expect(XL, state_after_measure):+1.4f}",
-                      f"{qu.expect(ZL, state_after_measure):+1.4f}",
-                      f"{qu.expect(1j * XL * ZL, state_after_measure):+1.4f}"
-                      )
-
             prob_stabilizers = np.prod(probability_each_measurement)
             cumulative_probability_stabilizers += prob_stabilizers
 
@@ -284,6 +275,19 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                 correction_successful = (1 + abs(qu.expect(XL, state_after_measure))) / 2
             elif jLog in (4, 5):
                 correction_successful = (1 + abs(qu.expect(1j * XL * ZL, state_after_measure))) / 2
+
+            if VERBOSE:
+                print(f"{index_stab_measurement: 4d}",
+                      configuration_int_X,
+                      configuration_int_Z,
+                      f"{np.prod(probability_each_measurement):1.3f}",
+                      f"{qu.expect(XL, state_after_measure):+1.3f}",
+                      f"{qu.expect(ZL, state_after_measure):+1.3f}",
+                      f"{qu.expect(1j * XL * ZL, state_after_measure):+1.3f}",
+                      f"{cumulative_probability_stabilizers:.5f}",
+                      f"{1-cumulative_probability_stabilizers:.4e}",
+                      f"{1-correction_successful:.4e}",
+                      )
 
             average_value_each_stab_meas.append(prob_stabilizers *
                                                 correction_successful

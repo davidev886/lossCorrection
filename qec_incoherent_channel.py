@@ -78,7 +78,7 @@ channel_probs = {'1a': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(
 
 prob_loss = np.sin(phi / 2)**2 / 2
 
-all_ancilla_outcomes = get_binary_confs(L) #
+all_ancilla_outcomes = get_binary_confs(L)
 
 all_channel_events = get_binary_confs(L)
 

@@ -82,6 +82,8 @@ all_ancilla_outcomes = get_binary_confs(L) #
 
 all_channel_events = get_binary_confs(L)
 
+all_stabilizer_outcomes = list(product(get_binary_confs(3), get_binary_confs(3)))
+
 file_data_name = os.path.join(folder_name,
                               final_data_name
                               )
@@ -232,17 +234,13 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
 
         cumulative_probability_stabilizers = 0.0
 
-        for meas_binary_X, meas_binary_Z in product(range(8), range(8)):
+        for configuration_int_X, configuration_int_Z in all_stabilizer_outcomes:
             # if abs(1 - cumulative_probability_stabilizers) < 1e-4:
                 # exit if the cumulative probability
                 # during the stabilizer measurement
                 # is already close to 1
                 # break
             state_after_measure = qu.Qobj(rho_L[:], dims=rho_L.dims)
-            configuration_str_X = bin(meas_binary_X)[2:].zfill(3)
-            configuration_int_X = [int(_) for _ in configuration_str_X]
-            configuration_str_Z = bin(meas_binary_Z)[2:].zfill(3)
-            configuration_int_Z = [int(_) for _ in configuration_str_Z]
             probability_each_measurement = []
             for stab_num, outcome_stab in enumerate(configuration_int_X):
                 prob = (PPx[stab_num][outcome_stab] *

@@ -12,63 +12,28 @@ from utils.p_operators_qutrit import *
 from utils.overrotation_channel import (CorrelatedOverRotQubitAll,
                                         SingleOverRotQubitAll)
 import datetime
+from utils.parameters import parse_command_line
 
 import argparse
 
 np.set_printoptions(precision=4, suppress=True)
 
-# python process_matrix_simulation_all.py --phi_tilde  --epsilon_choi
-parser = argparse.ArgumentParser(description="Simulate qubit losses"
-                                 "with QND measurement qubit+7qutrit system")
-parser.add_argument('--phi_tilde',
-                    type=float,
-                    default=0.05,
-                    help="Rotation angle"
-                    )
-parser.add_argument('--epsilon_choi',
-                    type=float,
-                    default=0.0,
-                    help="epsilon_choi"
-                    )
-parser.add_argument('--logical_state',
-                    type=int,
-                    default=0,
-                    help="logical state corresponding"
-                         "to: 0, 1, +, -, +i, -i"
-                    )
-parser.add_argument('--chi_threshold',
-                    type=float,
-                    default=0.0,
-                    help="threshold for discarding Kraus"
-                         "operators in the chi matrix"
-                    )
-parser.add_argument('--dir_name',
-                    type=str,
-                    default="./",
-                    help="directory for saving data"
-                    )
-parser.add_argument('--p_overrot_2',
-                    type=float,
-                    default=0.136,
-                    help="over rotation MS gate"
-                    )
-parser.add_argument('--p_overrot_1',
-                    type=float,
-                    default=0.010,
-                    help="over rotation single-qubit gates"
-                    )
-parser.add_argument('--num_trials',
-                    type=int,
-                    default=5000,
-                    help="Number of Monte Carlo samples"
-                    )
+np.set_printoptions(precision=4, suppress=True)
 
-args = parser.parse_args()
+args = parse_command_line()
+
 phi_tilde = args.phi_tilde
+print(phi_tilde)
 phi = phi_tilde * np.pi
 epsilon_choi = args.epsilon_choi
 jLog = args.logical_state
 chi_threshold = args.chi_threshold
+eta = args.p_overrot_2 * np.pi
+eps = args.p_overrot_1 * np.pi
+folder_name = args.dir_name
+num_trials = args.num_trials
+VERBOSE = args.verbose
+
 p_overrot_2 = args.p_overrot_2
 p_overrot_1 = args.p_overrot_1
 eta = p_overrot_2 * np.pi
@@ -161,25 +126,33 @@ for outcomes_ancilla in all_loss_events:
                 # the state cannot be projected in the
                 # +1 eigenstate of the ancilla
                 null_state = True
+                print("check null state outcome 0", prob_outcome)
+                probs_outcome.append(prob_outcome)
+                break
             else:
+                prob_total_event.append(prob_outcome)
                 rho_L = (Pp_ancilla *
                          rho_L *
-                         Pp_ancilla.dag() / abs(prob_outcome))
+                         Pp_ancilla.dag() / prob_outcome
+                         )
         elif outcomes_ancilla[data_q] == 1:
             prob_outcome = (rho_L * Pm_ancilla).tr()
             if abs(prob_outcome.imag) > 1e-5:
                 print("warning: im prob_outcome = {prob_outcome}")
             if prob_outcome == 0:
                 null_state = True
+                print("check null state outcome 1", prob_outcome)
+                probs_outcome.append(prob_outcome)
+                break
             else:
+                prob_total_event.append(prob_outcome)
                 rho_L = (Pm_ancilla *
                          rho_L *
-                         Pm_ancilla.dag() / abs(prob_outcome)
+                         Pm_ancilla.dag() / prob_outcome
                          )
                 # reset ancilla
                 rho_L = Xa * rho_L * Xa.dag()
 
-        prob_total_event.append(prob_outcome)
         print(data_q,
               outcomes_ancilla[data_q],
               prob_outcome)
@@ -192,6 +165,12 @@ for outcomes_ancilla in all_loss_events:
         print(prob_loss_event)
         correction_successful = 0.0
         prob_correction_logical_state.append(correction_successful)
+        conf_loss = int("".join(str(_) for _ in outcomes_ancilla))
+        final_p_loss.append([phi_tilde,
+                             conf_loss,
+                             correction_successful,
+                             prob_loss_event
+                             ])
     else:
         w_0 = rho_L.ptrace(kept_qubits)
         rho_L = (qu.tensor([qu.fock_dm(3, 0)] * len(losses) +
@@ -263,13 +242,15 @@ for outcomes_ancilla in all_loss_events:
             exp_x = np.real(qu.expect(XL, state_after_measure))
             exp_z = np.real(qu.expect(ZL, state_after_measure))
             exp_y = np.real(qu.expect(1j * XL * ZL, state_after_measure))
-            print(conf_int_X,
-                  conf_int_Z,
-                  f"{prob_stabilizers:1.4f}",
-                  f"{exp_x:1.4}",
-                  f"{exp_z:1.4}",
-                  f"{exp_y:1.4}"
-                  )
+
+            if VERBOSE:
+                print(conf_int_X,
+                      conf_int_Z,
+                      f"{prob_stabilizers:1.4f}",
+                      f"{exp_x:1.4}",
+                      f"{exp_z:1.4}",
+                      f"{exp_y:1.4}"
+                      )
 
             if jLog in (0, 1):
                 correction_successful = (1 + abs(exp_z)) / 2
@@ -301,3 +282,6 @@ for outcomes_ancilla in all_loss_events:
                        '%.18e\t' +
                        '%.18e\t')
 
+np.savetxt(file_data_name,
+           final_p_loss,
+           fmt='%1.5f\t%07d\t%.18e\t%.18e\t')

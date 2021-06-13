@@ -10,7 +10,9 @@ import os
 from utils.p_operators_qutrit import *
 # from utils.p_operators import *
 from utils.binary_conf import get_binary_confs
-from utils.incoherent_channel_qutrit import (channel_E_0, channel_E_1)
+from utils.incoherent_channel_qutrit import (channel_E_0,
+                                             channel_E_1,
+                                             new_channel)
 from utils.parameters import parse_command_line
 import datetime
 
@@ -134,8 +136,10 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
         prob_outcome_ch_ev = 1.0
         probs_incoherent_process.append(1.0)
 
-        rho_L = (channel_E_0(Pp_ancilla * rho_L * Pp_ancilla.dag(), channel_probs, data_q)
-                + channel_E_1(Pm_ancilla * rho_L * Pm_ancilla.dag(), channel_probs, data_q))
+#        rho_L = (channel_E_0(Pp_ancilla * rho_L * Pp_ancilla.dag(), channel_probs, data_q)
+#                + channel_E_1(Pm_ancilla * rho_L * Pm_ancilla.dag(), channel_probs, data_q))
+
+        rho_L = new_channel(rho_L, channel_probs, data_q)
         # measuring the ancilla
         if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
             prob_outcome = (rho_L * Pp_ancilla).tr()

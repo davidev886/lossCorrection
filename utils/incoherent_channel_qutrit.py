@@ -22,12 +22,22 @@ def channel_E_1(rho_L, prob, n_qubit):
 
 
 def new_channel(rho_L, prob, n_qubit):
+    dimHa = 2
+    dimHq = 3
+
+    proj_2 = qu.tensor([qu.qeye(dimHq)] * n_qubit
+                        + [proj(2, 2, dimH = 3)]
+                        + [qu.qeye(dimHq)] * (L - n_qubit - 1)
+                        + [qu.qeye(dimHa)])
     Xq = X[n_qubit]
-    rhof = 0.5 * (prob['1a'] * Id * rho_L * Id +
+#     print(proj_2)
+#     print()
+#     print(rho_L)
+    rhof =  (prob['1a'] * Id * rho_L * Id +
             prob['1b'] * Xq * rho_L  * Xq +
             prob['1c'] * Xq * Xa * rho_L * Xq * Xa +
             prob['1d'] * Xa * rho_L * Xa +
-            prob['2a'] * Id * rho_L * Id +
-            prob['2b'] * Xa * rho_L * Xa
+            prob['2a'] * Xa * proj_2 *  rho_L * proj_2 * Xa +
+            prob['2b'] * Xa * proj_2 *  rho_L * proj_2 * Xa
             )
     return rhof

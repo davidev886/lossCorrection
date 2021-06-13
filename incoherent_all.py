@@ -74,8 +74,8 @@ channel_probs = {'1a': (3 + np.cos(2*eps) + 4*np.cos(eps)*np.cos(eta))/8.,  # 1(
                  '1b': np.sin(eps)**2/4.,  # 1(b)
                  '1c': (3 + np.cos(2*eps) - 4*np.cos(eps)*np.cos(eta))/8.,  # 1(c)
                  '1d': np.sin(eps)**2/4.,  # 1(d)
-                 '2a': np.cos(eta/2.)**2*np.cos(eps/2.)**2,  # 2(a)
-                 '2b': np.cos(eta/2.)**2*np.sin(eps/2.)**2,  # 2(b)
+                 '2a': np.cos(eps/2.)**2,  # 2(a)
+                 '2b': np.sin(eps/2.)**2,  # 2(b)
                  }
 
 prob_loss = np.sin(phi / 2)**2 / 2

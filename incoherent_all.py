@@ -100,7 +100,7 @@ if phi_tilde == 0:
 
 all_channel_events = [[0, 0, 0, 0, 0, 0, 0]]
 for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_outcomes):
-    print(channel_event, outcomes_ancilla )
+    print(channel_event, outcomes_ancilla)
 
     psiL = LogicalStates[jLog]
 
@@ -123,23 +123,12 @@ for channel_event, outcomes_ancilla in product(all_channel_events, all_ancilla_o
                              )
         # rho_L.tidyup(atol = 1e-8)
         # applying the incoherent channel
-#         if channel_event[data_q] == 0:
-#             prob_outcome_ch_ev = (rho_L * Pp_ancilla).tr()
-#             probs_incoherent_process.append(prob_outcome_ch_ev)
-#             rho_L = Pp_ancilla * rho_L * Pp_ancilla.dag() / prob_outcome_ch_ev
-#             rho_L = channel_E_0(rho_L, channel_probs, data_q)
-#         elif channel_event[data_q] == 1:
-#             prob_outcome_ch_ev = (rho_L * Pm_ancilla).tr()
-#             probs_incoherent_process.append(prob_outcome_ch_ev)
-#             rho_L = Pm_ancilla * rho_L * Pm_ancilla.dag() / prob_outcome_ch_ev
-#             rho_L = channel_E_1(rho_L, channel_probs, data_q)
+
         prob_outcome_ch_ev = 1.0
         probs_incoherent_process.append(1.0)
 
-#        rho_L = (channel_E_0(Pp_ancilla * rho_L * Pp_ancilla.dag(), channel_probs, data_q)
-#                + channel_E_1(Pm_ancilla * rho_L * Pm_ancilla.dag(), channel_probs, data_q))
-
-        rho_L = new_channel(rho_L, channel_probs, data_q)
+#        rho_L = new_channel(rho_L, channel_probs, data_q)
+        rho_L = new_channel_only_qutrit(rho_L, channel_probs, data_q)
         # measuring the ancilla
         if outcomes_ancilla[data_q] == 0:  # ancilla in 0 state
             prob_outcome = (rho_L * Pp_ancilla).tr()

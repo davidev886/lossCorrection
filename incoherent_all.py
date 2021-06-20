@@ -12,7 +12,8 @@ from utils.p_operators_qutrit import *
 from utils.binary_conf import get_binary_confs
 from utils.incoherent_channel_qutrit import (channel_E_0,
                                              channel_E_1,
-                                             new_channel)
+                                             new_channel,
+                                             new_channel_only_qutrit)
 from utils.parameters import parse_command_line
 import datetime
 

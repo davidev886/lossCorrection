@@ -66,6 +66,8 @@ def new_channel_only_qutrit(rho_L, prob, n_qubit):
     rhof =  (prob['1a'] * Id * P01 * rho_L * P01.dag() * Id +
             prob['1b'] * Xq * P01 * rho_L * P01.dag()  * Xq +
             prob['1c'] * Xq  * P01 * rho_L * P01.dag() * Xq +
-            prob['1d'] * P01 * rho_L * P01.dag()
+            prob['1d'] * P01 * rho_L * P01.dag() +
+            prob['2a'] * Xa * proj_2 *  rho_L * proj_2 * Xa +
+            prob['2b'] * Xa * proj_2 *  rho_L * proj_2 * Xa
             )
     return rhof

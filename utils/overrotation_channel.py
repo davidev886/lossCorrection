@@ -119,8 +119,35 @@ def SingleOverRotQubit(qutrit_n, theta):
     return corr
 
 
+def SingleOverRotQutritAll(theta):
+    return [SingleOverRotQutrit(qutrit_n, theta) for qutrit_n in range(L)]
+
+
+def SingleOverRotQutrit(qutrit_n, theta):
+    dimHq = 3
+    dimHa = 2
+    X_qutrit = qu.Qobj([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+    ket22bra = qu.Qobj([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
+
+    R1q = (np.cos(theta / 2) * (qu.qeye(dimHq) - ket22bra) -
+           1j * np.sin(theta / 2) * X_qutrit +
+           ket22bra
+           )
+    R1a = qu.qeye(dimHa)
+
+    OverRotSingle = ([qu.qeye(dimHq)] * qutrit_n +
+                     [R1q] +
+                     [qu.qeye(dimHq)] * (L - qutrit_n - 1) +
+                     [R1a]
+                     )
+    corr = qu.tensor(OverRotSingle)
+
+    return corr
+
+
 def SingleOverRotQubitAll(theta):
     return [SingleOverRotQubit(qutrit_n, theta) for qutrit_n in range(L)]
+
 
 
 if __name__ == "__main__":

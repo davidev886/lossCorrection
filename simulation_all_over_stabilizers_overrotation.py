@@ -10,7 +10,9 @@ from itertools import product
 from utils.binary_conf import binary_configurations
 from utils.p_operators_qutrit import *
 from utils.overrotation_channel import (CorrelatedOverRotQubitAll,
-                                        SingleOverRotQubitAll)
+                                        SingleOverRotQubitAll,
+                                        SingleOverRotQutritAll
+                                        )
 import datetime
 from utils.parameters import parse_command_line
 
@@ -66,7 +68,9 @@ result_correction = []
 LogicalStates_str = ["0", "1", "+", "-", "+i", "-i"]
 
 OverRotationOperators = CorrelatedOverRotQubitAll(p_overrot_2 * np.pi)
-SingleOverRotations = SingleOverRotQubitAll(p_overrot_1 * np.pi)
+#SingleOverRotations = SingleOverRotQubitAll(p_overrot_1 * np.pi)
+
+SingleOverRotations = SingleOverRotQutritAll(p_overrot_1 * np.pi)
 
 now = datetime.datetime.now()
 final_data_name = (now.strftime("%Y%m%d%H%M") +

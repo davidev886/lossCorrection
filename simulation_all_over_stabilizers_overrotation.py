@@ -85,6 +85,7 @@ result_correction = []
 num_losses = []
 
 all_loss_events = binary_configurations().configurations_list
+
 for outcomes_ancilla in all_loss_events:
     index_confs += 1
 
@@ -243,21 +244,22 @@ for outcomes_ancilla in all_loss_events:
             exp_z = np.real(qu.expect(ZL, state_after_measure))
             exp_y = np.real(qu.expect(1j * XL * ZL, state_after_measure))
 
-            if VERBOSE:
-                print(conf_int_X,
-                      conf_int_Z,
-                      f"{prob_stabilizers:1.4f}",
-                      f"{exp_x:1.4}",
-                      f"{exp_z:1.4}",
-                      f"{exp_y:1.4}"
-                      )
-
             if jLog in (0, 1):
                 correction_successful = (1 + abs(exp_z)) / 2
             elif jLog in (2, 3):
                 correction_successful = (1 + abs(exp_x)) / 2
             elif jLog in (4, 5):
                 correction_successful = (1 + abs(exp_y)) / 2
+
+            if VERBOSE:
+                print(conf_int_X,
+                      conf_int_Z,
+                      f"{prob_stabilizers:1.8f}",
+                      f"{correction_successful:1.8f}",
+                      f"{exp_z:+1.8}",
+                      f"{exp_x:+1.8}",
+                      f"{exp_y:+1.8}"
+                      )
 
             prob_correction_logical_state.append(prob_stabilizers *
                                                  correction_successful

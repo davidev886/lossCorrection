@@ -132,7 +132,7 @@ for outcomes_ancilla in all_loss_events:
                 # +1 eigenstate of the ancilla
                 null_state = True
                 print("check null state outcome 0", prob_outcome)
-                probs_outcome.append(prob_outcome)
+                prob_total_event.append(prob_outcome)
                 break
             else:
                 prob_total_event.append(prob_outcome)
@@ -147,7 +147,7 @@ for outcomes_ancilla in all_loss_events:
             if prob_outcome == 0:
                 null_state = True
                 print("check null state outcome 1", prob_outcome)
-                probs_outcome.append(prob_outcome)
+                prob_total_event.append(prob_outcome)
                 break
             else:
                 prob_total_event.append(prob_outcome)

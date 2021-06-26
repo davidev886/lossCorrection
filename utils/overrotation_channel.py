@@ -119,8 +119,8 @@ def SingleOverRotQubit(qutrit_n, theta):
     return corr
 
 
-def SingleOverRotQutritAll(theta):
-    return [SingleOverRotQutrit(qutrit_n, theta) for qutrit_n in range(L)]
+def SingleOverRotQubitAll(theta):
+    return [SingleOverRotQubit(qutrit_n, theta) for qutrit_n in range(L)]
 
 
 def SingleOverRotQutrit(qutrit_n, theta):
@@ -145,19 +145,5 @@ def SingleOverRotQutrit(qutrit_n, theta):
     return corr
 
 
-def SingleOverRotQubitAll(theta):
-    return [SingleOverRotQubit(qutrit_n, theta) for qutrit_n in range(L)]
-
-
-
-if __name__ == "__main__":
-    print("c")
-    p_corr = 0.5
-
-    vacuum = qu.tensor([qu.basis(3, 0)] * L + [qu.basis(2, 0)])
-    X_o = CorrelatedOverRotQubitAll(p_corr)
-    print(len(X_o))
-#     state_rho = vacuum*vacuum.dag()
-#     for data_q in range(7):
-#         state_rho = UnitaryQubitQutritQNDDepol(p, state_rho, data_q)
-#
+def SingleOverRotQutritAll(theta):
+    return [SingleOverRotQutrit(qutrit_n, theta) for qutrit_n in range(L)]
